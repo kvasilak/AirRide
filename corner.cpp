@@ -1,7 +1,7 @@
 /*************************************************************************
 **   Air ride controller for the MSGPIO hardware
 **
-** Copyright 2010 Keith Vasilakes
+** Copyright 2013 Keith Vasilakes
 **
 ** This file is part of MegaRide an Air ride controller.
 **

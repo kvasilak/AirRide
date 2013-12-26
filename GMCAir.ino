@@ -1,17 +1,45 @@
+/*************************************************************************
+**   Air ride controller for the MSGPIO hardware
+**
+** Copyright 2013 Keith Vasilakes
+**
+** This file is part of MegaRide an Air ride controller.
+**
+** MegaRide is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+** License as published by the Free Software Foundation, either version 3 of the License, or (at your option) 
+** any later version.
+**
+** MegaRide is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the 
+** implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public 
+** License for more details.
+**
+** You should have received a copy of the GNU General Public License along with MegaRide. If not, see
+** http://www.gnu.org/licenses/.
+**
+**    GMCAit.ino
+**************************************************************************/
 #include "corner.h"
+#include "debug.h"
+#include "common.h"
 
 CCorner CornerLR(LeftRear);
 CCorner CornerRR(RightRear);
 const int PinTilt = 5;
 const int PinDumpTank = 6;
-enum states {RUNHEIGHT, DUMPTANK, DUMPINGTANK};
+
+static states_t state = DUMPTANK;
+
 //bool Dumping = false;
-states state = RUNHEIGHT;
 uint32_t SampleTime;
 int32_t LRfilter_reg; 
 int32_t RRfilter_reg; 
 int32_t LRFiltered;
 int32_t RRFiltered;
+
+#define MODULE "Main"
+#define MAINSTATE "MainState"
+
+static char *StateStrs[] = {STATES_LIST(STRINGIFY)};
 
 void setup() 
 {
@@ -23,6 +51,8 @@ void setup()
   
   LRfilter_reg 		= (1024 - analogRead(A0)) << FILTER_SHIFT;
   RRfilter_reg 		= (1024 - analogRead(A2)) << FILTER_SHIFT;
+  
+  SetState(RUNHEIGHT);
 }
 
 //return true if it's been period ms since start
@@ -30,6 +60,18 @@ bool IsTimedOut(uint32_t period, uint32_t start)
 {
   uint32_t current = millis();
   return(current - start > period);
+}
+
+
+void SetState(states_t s)
+{
+    static states_t laststate = DUMPINGTANK;
+    
+    if(s != laststate)
+    {
+        Log(MODULE, "MainState", StateStrs[s]);
+        laststate = s;
+    }
 }
 
 void loop() 
@@ -62,29 +104,26 @@ void loop()
         LRFiltered = (LRfilter_reg >> FILTER_SHIFT);
         RRFiltered = (RRfilter_reg >> FILTER_SHIFT);
         
-        Serial.print(HEIGHT_NOMINAL); //nominal
-        Serial.print(",");
-        Serial.print(HEIGHT_NOMINAL - HOLD_DEAD_BAND); //low
-        Serial.print(",");
-        Serial.print(HEIGHT_NOMINAL + HOLD_DEAD_BAND); //high
-        Serial.print(",");
-        Serial.print(LRheight);
-        Serial.print(",");
-        Serial.print(RRheight);
-        Serial.print(",");
-        Serial.print(LRFiltered);
-        Serial.print(",");
-        Serial.print(RRFiltered);
-        Serial.println("");
+        
+        Log(MODULE, "LRHeight", LRheight);
+        Log(MODULE, "RRHeight", LRheight);
+        Log(MODULE, "LRHeightFilt", LRFiltered);
+        Log(MODULE, "RRHeightFilt", LRheight);
         
         SampleTime = millis();
     }
 
+    
     switch(state)
     {
         case RUNHEIGHT: 
             CornerLR.Run(0); //tilt);
             CornerRR.Run(0); //-tilt);
+            
+            if(LOW == digitalRead(PinDumpTank))
+            {
+                SetState(DUMPTANK);
+            }
             break;
         case DUMPTANK:
             //open all valves to dump all air from system
@@ -94,7 +133,7 @@ void loop()
             //CornerRR.Fill(Open);
             //CornerRR.Dump(Open);
             
-            state = DUMPINGTANK;
+            SetState(DUMPINGTANK);
             break;
          case DUMPINGTANK:
             //wait for user to release button, then close all valves
@@ -106,11 +145,11 @@ void loop()
               //  CornerRR.Fill(Closed);
               //  CornerRR.Dump(Closed);
                 
-                state = RUNHEIGHT;
+                SetState(RUNHEIGHT);
             }
             break;
         default:
-            state = RUNHEIGHT;
+            SetState(RUNHEIGHT);
     }
   
 }
