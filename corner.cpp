@@ -22,7 +22,7 @@
 #include <Arduino.h>
 #include <stdint.h>
 #include "corner.h"
-
+#include "debug.h"
 
 
 //This class is responsible for managing the height of a corner.
@@ -132,7 +132,8 @@ void CCorner::PrintCorner()
 void CCorner::SetState(ValveOp s)
 {
     ValveOp laststate = Holding;
-    const char *StateStrs[] = {"Fill", "Dump", "Hold"};
+    
+    static char *StateStrs[] = {VALVE_STATES_LIST(STRINGIFY)};
 
     PrintCorner();
     Serial.print("state,");
@@ -156,14 +157,12 @@ void CCorner::Run(int16_t tilt)
 	//the tilt pot causes one corner to raise while the other lowers
 	//This is used to level the motorhome while camping
 	//setpoint + tilt is still limited to +-
-	int32_t setpoint 		= 512; //analogRead(PinSetpoint); //GetHeight(Height) + tilt;
-	int32_t height; 			//= GetHeight();
+	int32_t setpoint 		= analogRead(PinSetpoint) + tilt;
+	int32_t height 			= GetHeight();
 
 	//sample Slowly
 	if(IsTimedOut(CycleTime, LastTime) )
 	{
-        height	= GetHeight();
-        
 		// Update filter with current sample.
 		filter_reg = filter_reg - (filter_reg >> FILTER_SHIFT) + height;
 
@@ -172,6 +171,19 @@ void CCorner::Run(int16_t tilt)
         // Scale output for unity gain.
         slowheight = (filter_reg >> FILTER_SHIFT);
 
+        switch(corner)
+       {
+            case LeftRear:
+                Log("Main", "LRError", height - setpoint);
+                Log("Main", "LeftSet", setpoint);
+                break;
+            case RightRear:
+                Log("Main", "RRError", height - setpoint);
+                Log("Main", "RightSet", setpoint);
+                break;
+       } 
+        
+        
 
 
         switch (State)
@@ -180,30 +192,24 @@ void CCorner::Run(int16_t tilt)
                 //react slowly if already within deadband
                 if( slowheight < (setpoint - HoldDeadBand)) //<500
                 {
-                    //Dont switch states till we've waited holfOffTime
-                    if(IsTimedOut(HoldOffTime, HoldOff))
-                    {
+                    //Dont switch states till we've waited holdfOffTime
+                    //if(IsTimedOut(HoldOffTime, HoldOff))
+                    //{
                         SetState(Filling);
                         Fill(Open);
                         CycleTime = 1;
-                        
-                        //Over ride the filter, force it to the current value
-                        //filter_reg = ((height) << FILTER_SHIFT);
-                    }
+                    //}
                 }
                 else if(slowheight > (setpoint + HoldDeadBand)) //>524
                 {
                     //Dont switch states till we've waited holfOffTime
-                    if(IsTimedOut(HoldOffTime, HoldOff))
-                    {
+                    //if(IsTimedOut(HoldOffTime, HoldOff))
+                    //{
                         SetState(Dumping);
                         Dump(Open);
                         
                         CycleTime = 1;
-                        
-                        //Over ride the filter, force it to the current value
-                        //filter_reg = (height << FILTER_SHIFT);
-                    }
+                    //}
                 }
                 break;
             case Filling:

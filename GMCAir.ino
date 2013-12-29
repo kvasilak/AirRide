@@ -36,6 +36,11 @@ int32_t RRfilter_reg;
 int32_t LRFiltered;
 int32_t RRFiltered;
 
+int16_t LRheight;
+int16_t RRheight;
+int16_t SetPoint;
+int16_t Tilt;
+
 #define MODULE "Main"
 #define MAINSTATE "MainState"
 
@@ -78,19 +83,19 @@ void SetState(states_t s)
 
 void loop() 
 {
+    LRheight = 1024 - analogRead(A0);
+    RRheight = 1024 - analogRead(A2);
+    SetPoint = analogRead(A3);
+    Tilt = analogRead(A1)-512;
+        
     //read the tilt setpoint and adjust heights as needed
     //center of pot means no tilt
     //increasing value (>512) means raise right side, lower left side
     //decreasing value (<512) means raise left side, Lover right side
     
-    //int16_t tilt = analogRead(PinTilt) - 512;  
-    
     if(IsTimedOut(100, SampleTime))
     {
-        int LRheight = 1024 - analogRead(A0);
-        int RRheight = 1024 - analogRead(A2);
-        
-    	
+  	
         // Update filter with current sample.
 		LRfilter_reg = LRfilter_reg - (LRfilter_reg >> FILTER_SHIFT) + LRheight;
         RRfilter_reg = RRfilter_reg - (RRfilter_reg >> FILTER_SHIFT) + RRheight;
@@ -100,12 +105,10 @@ void loop()
         
         
         Log(MODULE, "LRHeight", LRheight);
-        Log(MODULE, "RRHeight", LRheight);
-        Log(MODULE, "LRHeightFilt", LRFiltered);
-        Log(MODULE, "RRHeightFilt", LRheight);
-        
-        Log(MODULE, "MainState", StateStrs[state]);
-        
+        Log(MODULE, "RRHeight", RRheight);
+        Log(MODULE, "SetPoint", SetPoint);
+        Log(MODULE, "Tilt", Tilt);
+       
         SampleTime = millis();
     }
 
@@ -113,8 +116,8 @@ void loop()
     switch(state)
     {
         case RUNHEIGHT: 
-            CornerLR.Run(0); //tilt);
-            CornerRR.Run(0); //-tilt);
+            CornerLR.Run(0-Tilt);
+            CornerRR.Run(Tilt);
             
             if(LOW == digitalRead(PinDumpTank))
             {

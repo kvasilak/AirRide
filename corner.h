@@ -23,6 +23,7 @@
 #define INCLUDE_CORNER_H
 
 #include <stdint.h>
+#include "debug.h"
 
 enum Position { 
         LeftFront, 
@@ -35,7 +36,17 @@ enum LEDS { OK_LED, Error_LED, IN_Position_LED };
 
 enum Solenoid { Open, Closed };
 
-enum ValveOp { Filling, Dumping, Holding, LastState };
+//enum ValveOp { Filling, Dumping, Holding, LastState };
+#define VALVE_STATES_LIST(macro)\
+    macro(Filling)    \
+    macro(Dumping)     \
+    macro(Holding)      \
+    macro(LastState)
+    
+enum ValveOp
+{
+  VALVE_STATES_LIST(ENUMIFY)
+};
 
 // Parameter K for the filter
 #define FILTER_SHIFT    5//8

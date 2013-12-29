@@ -269,5 +269,6 @@ namespace Mettle
             txtUniques.Clear();
             txtTagData.Clear();
         }
+
     }
 }
