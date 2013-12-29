@@ -32,7 +32,7 @@ CCorner::CCorner(Position p):
 DeadBand(DEAD_BAND),//ADC counts 0-1024
 HoldDeadBand(HOLD_DEAD_BAND),
 CycleTime(100), //ms between updates
-State(Holding),
+State(LastState),
 PinDumpRightRear(10), //set IO pins here
 PinDumpLeftRear(8),
 PinFillRightRear(11),
@@ -74,24 +74,14 @@ bool CCorner::IsTimedOut(uint32_t period, uint32_t start)
 int16_t CCorner::GetHeight()
 {
     int height=0;
-    const char *StateStrs[] = {"Fill", "Dump", "Hold"};
     
     switch(corner)
    {
         case LeftRear:
             height = 1024 - analogRead(PinHeightLeftRear); 
-            //Serial.print("LR; ");
-            //Serial.print(512-height);
-            //Serial.print(", State; ");
-            //Serial.print(StateStrs[State]);
-            //Serial.println("");
             break;
         case RightRear:
             height = 1024 - analogRead(PinHeightRghtRear);
-            //Serial.print("RR; ");
-            //Serial.print(512-height);
-            //Serial.print(", State; ");
-            //Serial.print(StateStrs[State]);            //Serial.println("");
             break;
    }   
    
@@ -131,12 +121,30 @@ void CCorner::PrintCorner()
     switch(corner)
    {
         case LeftRear:
-            Serial.print("Left; ");
+            Serial.print(">Left,");
             break;
         case RightRear:
-            Serial.print("Right ");
+            Serial.print(">Right,");
             break;
    } 
+}
+
+void CCorner::SetState(ValveOp s)
+{
+    ValveOp laststate = Holding;
+    const char *StateStrs[] = {"Fill", "Dump", "Hold"};
+
+    PrintCorner();
+    Serial.print("state,");
+    Serial.print(StateStrs[s]);
+    Serial.print("<");
+    
+    if(laststate != s)
+    {
+        laststate = s;
+    }
+    
+    State = s;
 }
 
 //Uses the low pass filter described in "Simple Software Lowpass Filter.pdf"
@@ -155,12 +163,6 @@ void CCorner::Run(int16_t tilt)
 	if(IsTimedOut(CycleTime, LastTime) )
 	{
         height	= GetHeight();
-        
-        //Serial.print(", error; ");
-        //Serial.print(setpoint - height);
-        //Serial.print(", State; ");
-        //Serial.print(StateStrs[State]);
-        //Serial.println("");
         
 		// Update filter with current sample.
 		filter_reg = filter_reg - (filter_reg >> FILTER_SHIFT) + height;
@@ -181,11 +183,7 @@ void CCorner::Run(int16_t tilt)
                     //Dont switch states till we've waited holfOffTime
                     if(IsTimedOut(HoldOffTime, HoldOff))
                     {
-                        //PrintCorner();
-                        //Serial.print("Filling ");
-                        //Serial.print(height-512);
-                        //Serial.println("");
-                        State = Filling;
+                        SetState(Filling);
                         Fill(Open);
                         CycleTime = 1;
                         
@@ -198,11 +196,7 @@ void CCorner::Run(int16_t tilt)
                     //Dont switch states till we've waited holfOffTime
                     if(IsTimedOut(HoldOffTime, HoldOff))
                     {
-                        //PrintCorner();
-                        //Serial.print("Dumping ");
-                        //Serial.print(height-512);
-                        //Serial.println("");
-                        State = Dumping;
+                        SetState(Dumping);
                         Dump(Open);
                         
                         CycleTime = 1;
@@ -216,11 +210,7 @@ void CCorner::Run(int16_t tilt)
                 //Respond quickly when filling
                 if(height > (setpoint-DeadBand)) //>509
                 {	
-                    //PrintCorner();
-                    //Serial.print("Holding ");
-                    //Serial.print(height-512);
-                    //Serial.println("");
-                    State = Holding;
+                    SetState(Holding);
                     Fill(Closed);
                     
                     //need to wait HoldOffTime till next state change
@@ -237,11 +227,7 @@ void CCorner::Run(int16_t tilt)
                 //respond quickly when dumping
                 if(height < (setpoint + DeadBand)) //<515
                 {
-                    //PrintCorner();
-                    //Serial.print("Holding ");
-                    //Serial.print(height-512);
-                    //Serial.println("");
-                    State = Holding;
+                    SetState(Holding);
                     Dump(Closed);
                     
                     CycleTime = 100;
@@ -255,7 +241,7 @@ void CCorner::Run(int16_t tilt)
                 Serial.println("Default State!!");
                 Fill(Closed);
                 Dump(Closed);
-                State = Holding;
+                SetState(Holding);
         }
     }
 }

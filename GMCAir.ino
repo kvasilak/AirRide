@@ -25,11 +25,11 @@
 CCorner CornerLR(LeftRear);
 CCorner CornerRR(RightRear);
 const int PinTilt = 5;
-const int PinDumpTank = 6;
+const int PinDumpTank = 2;
 
-static states_t state = DUMPTANK;
+static states_t state = RUNHEIGHT;
 
-//bool Dumping = false;
+bool IsDumping = false;
 uint32_t SampleTime;
 int32_t LRfilter_reg; 
 int32_t RRfilter_reg; 
@@ -53,6 +53,8 @@ void setup()
   RRfilter_reg 		= (1024 - analogRead(A2)) << FILTER_SHIFT;
   
   SetState(RUNHEIGHT);
+  
+  pinMode(2, INPUT_PULLUP);
 }
 
 //return true if it's been period ms since start
@@ -81,15 +83,7 @@ void loop()
     //increasing value (>512) means raise right side, lower left side
     //decreasing value (<512) means raise left side, Lover right side
     
-    //int16_t tilt = analogRead(PinTilt) - 512;
-    
-   
-    //on first press of dump switch transition to dump tanks state
-    //if((LOW == digitalRead(PinDumpTank)) && (false == Dumping))
-    //{
-    //    Dumping = true;
-    //    state = DUMPTANK;
-    //}
+    //int16_t tilt = analogRead(PinTilt) - 512;  
     
     if(IsTimedOut(100, SampleTime))
     {
@@ -110,6 +104,8 @@ void loop()
         Log(MODULE, "LRHeightFilt", LRFiltered);
         Log(MODULE, "RRHeightFilt", LRheight);
         
+        Log(MODULE, "MainState", StateStrs[state]);
+        
         SampleTime = millis();
     }
 
@@ -127,11 +123,11 @@ void loop()
             break;
         case DUMPTANK:
             //open all valves to dump all air from system
-            //CornerLR.Fill(Open);
-            //CornerLR.Dump(Open);
+            CornerLR.Fill(Open);
+            CornerLR.Dump(Open);
         
-            //CornerRR.Fill(Open);
-            //CornerRR.Dump(Open);
+            CornerRR.Fill(Open);
+            CornerRR.Dump(Open);
             
             SetState(DUMPINGTANK);
             break;
@@ -139,11 +135,11 @@ void loop()
             //wait for user to release button, then close all valves
             if(HIGH == digitalRead(PinDumpTank))
             {
-              //  CornerLR.Fill(Closed);
-              //  CornerLR.Dump(Closed);
+                CornerLR.Fill(Closed);
+                CornerLR.Dump(Closed);
             
-              //  CornerRR.Fill(Closed);
-              //  CornerRR.Dump(Closed);
+                CornerRR.Fill(Closed);
+                CornerRR.Dump(Closed);
                 
                 SetState(RUNHEIGHT);
             }

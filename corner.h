@@ -35,7 +35,7 @@ enum LEDS { OK_LED, Error_LED, IN_Position_LED };
 
 enum Solenoid { Open, Closed };
 
-enum ValveOp { Filling, Dumping, Holding };
+enum ValveOp { Filling, Dumping, Holding, LastState };
 
 // Parameter K for the filter
 #define FILTER_SHIFT    5//8
@@ -73,6 +73,7 @@ class CCorner
     
     bool IsTimedOut(uint32_t period, uint32_t start);
     int16_t GetHeight();
+    void SetState(ValveOp s);
 
 };
 #endif //INCLUDE_CORNER_H

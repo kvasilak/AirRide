@@ -261,6 +261,13 @@ namespace Mettle
         private void BtnReset_Click(object sender, EventArgs e)
         {
             myMettle.Reset(this);
+
+            ModuleList.Clear();
+
+            txtAllText.Clear();
+            txtModules.Clear();
+            txtUniques.Clear();
+            txtTagData.Clear();
         }
     }
 }

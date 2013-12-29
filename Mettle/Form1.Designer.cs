@@ -36,6 +36,8 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             this.tabMain = new System.Windows.Forms.TabControl();
             this.tabChart = new System.Windows.Forms.TabPage();
+            this.tagState3 = new MettleLib.TagState();
+            this.tagState2 = new MettleLib.TagState();
             this.tagText8 = new MettleLib.TagText();
             this.tagText2 = new MettleLib.TagText();
             this.tagIO8 = new MettleLib.TagIO();
@@ -49,7 +51,6 @@
             this.tagChart1 = new MettleLib.TagChart();
             this.tagGauge2 = new MettleLib.TagGauge();
             this.tagText4 = new MettleLib.TagText();
-            this.tagText3 = new MettleLib.TagText();
             this.tagIO3 = new MettleLib.TagIO();
             this.tagIO2 = new MettleLib.TagIO();
             this.tagIO1 = new MettleLib.TagIO();
@@ -76,8 +77,14 @@
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.stripStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.stripError = new System.Windows.Forms.ToolStripStatusLabel();
-            this.tagState2 = new MettleLib.TagState();
-            this.tagState3 = new MettleLib.TagState();
+            this.tagState4 = new MettleLib.TagState();
+            this.tagState5 = new MettleLib.TagState();
+            this.tagState6 = new MettleLib.TagState();
+            this.tagState7 = new MettleLib.TagState();
+            this.tagState8 = new MettleLib.TagState();
+            this.tagState9 = new MettleLib.TagState();
+            this.label4 = new System.Windows.Forms.Label();
+            this.label6 = new System.Windows.Forms.Label();
             this.tabMain.SuspendLayout();
             this.tabChart.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.tagChart1)).BeginInit();
@@ -104,6 +111,14 @@
             // tabChart
             // 
             this.tabChart.BackColor = System.Drawing.SystemColors.Control;
+            this.tabChart.Controls.Add(this.label6);
+            this.tabChart.Controls.Add(this.label4);
+            this.tabChart.Controls.Add(this.tagState7);
+            this.tabChart.Controls.Add(this.tagState8);
+            this.tabChart.Controls.Add(this.tagState9);
+            this.tabChart.Controls.Add(this.tagState6);
+            this.tabChart.Controls.Add(this.tagState5);
+            this.tabChart.Controls.Add(this.tagState4);
             this.tabChart.Controls.Add(this.tagState3);
             this.tabChart.Controls.Add(this.tagState2);
             this.tabChart.Controls.Add(this.tagText8);
@@ -119,7 +134,6 @@
             this.tabChart.Controls.Add(this.tagChart1);
             this.tabChart.Controls.Add(this.tagGauge2);
             this.tabChart.Controls.Add(this.tagText4);
-            this.tabChart.Controls.Add(this.tagText3);
             this.tabChart.Controls.Add(this.tagIO3);
             this.tabChart.Controls.Add(this.tagIO2);
             this.tabChart.Controls.Add(this.tagIO1);
@@ -133,6 +147,32 @@
             this.tabChart.TabIndex = 1;
             this.tabChart.Tag = "Right";
             this.tabChart.Text = "Chart";
+            // 
+            // tagState3
+            // 
+            this.tagState3.Checked = false;
+            this.tagState3.Location = new System.Drawing.Point(447, 64);
+            this.tagState3.Module = "Main";
+            this.tagState3.Name = "tagState3";
+            this.tagState3.Size = new System.Drawing.Size(103, 23);
+            this.tagState3.Sort = "MainState";
+            this.tagState3.State = "RUNHEIGHT";
+            this.tagState3.TabIndex = 28;
+            this.tagState3.Tag = "";
+            this.tagState3.Text = "DUMPINGTANK";
+            // 
+            // tagState2
+            // 
+            this.tagState2.Checked = false;
+            this.tagState2.Location = new System.Drawing.Point(447, 35);
+            this.tagState2.Module = "Main";
+            this.tagState2.Name = "tagState2";
+            this.tagState2.Size = new System.Drawing.Size(103, 23);
+            this.tagState2.Sort = "MainState";
+            this.tagState2.State = "RUNHEIGHT";
+            this.tagState2.TabIndex = 27;
+            this.tagState2.Tag = "";
+            this.tagState2.Text = "DUMPTANK";
             // 
             // tagText8
             // 
@@ -266,25 +306,26 @@
             this.tagChart1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            chartArea1.AxisX.Maximum = 100D;
+            chartArea1.AxisX.Maximum = 500D;
             chartArea1.AxisX.Minimum = 0D;
-            chartArea1.AxisY.Maximum = 768D;
-            chartArea1.AxisY.Minimum = 0D;
+            chartArea1.AxisY.Maximum = 544D;
+            chartArea1.AxisY.Minimum = 480D;
             chartArea1.Name = "ChartArea1";
             this.tagChart1.ChartAreas.Add(chartArea1);
+            legend1.Enabled = false;
             legend1.Name = "Legend1";
             this.tagChart1.Legends.Add(legend1);
             this.tagChart1.Location = new System.Drawing.Point(3, 259);
-            this.tagChart1.Module = "Module2";
+            this.tagChart1.Module = "Main";
             this.tagChart1.Name = "tagChart1";
             series1.ChartArea = "ChartArea1";
             series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
             series1.Legend = "Legend1";
-            series1.Name = "XAxis";
+            series1.Name = "RRHeight";
             series2.ChartArea = "ChartArea1";
             series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
             series2.Legend = "Legend1";
-            series2.Name = "YAxis";
+            series2.Name = "LRHeight";
             series3.ChartArea = "ChartArea1";
             series3.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
             series3.Legend = "Legend1";
@@ -329,7 +370,7 @@
             this.tagGauge2.Location = new System.Drawing.Point(904, 6);
             this.tagGauge2.MaxValue = 1024F;
             this.tagGauge2.MinValue = 0F;
-            this.tagGauge2.Module = "Module2";
+            this.tagGauge2.Module = "Main";
             this.tagGauge2.Name = "tagGauge2";
             this.tagGauge2.NeedleColor1 = MettleLib.TagGauge.NeedleColorEnum.Red;
             this.tagGauge2.NeedleColor2 = System.Drawing.Color.DimGray;
@@ -400,7 +441,7 @@
             this.tagGauge2.ScaleNumbersStartScaleLine = 1;
             this.tagGauge2.ScaleNumbersStepScaleLines = 2;
             this.tagGauge2.Size = new System.Drawing.Size(114, 222);
-            this.tagGauge2.Sort = "YAxis";
+            this.tagGauge2.Sort = "RRHeight";
             this.tagGauge2.TabIndex = 15;
             this.tagGauge2.Tag = "YAxis";
             this.tagGauge2.Text = "tagGauge2";
@@ -422,20 +463,6 @@
             this.tagText4.Sort = "Right";
             this.tagText4.TabIndex = 14;
             this.tagText4.Tag = "Right";
-            // 
-            // tagText3
-            // 
-            this.tagText3.AcceptsReturn = true;
-            this.tagText3.AcceptsTab = true;
-            this.tagText3.Location = new System.Drawing.Point(622, 123);
-            this.tagText3.Module = "Module2";
-            this.tagText3.Multiline = true;
-            this.tagText3.Name = "tagText3";
-            this.tagText3.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.tagText3.Size = new System.Drawing.Size(161, 95);
-            this.tagText3.Sort = "*";
-            this.tagText3.TabIndex = 13;
-            this.tagText3.Tag = "*";
             // 
             // tagIO3
             // 
@@ -468,7 +495,7 @@
             this.tagIO1.Checked = false;
             this.tagIO1.ForeColor = System.Drawing.Color.Red;
             this.tagIO1.Location = new System.Drawing.Point(622, 21);
-            this.tagIO1.Module = "Module2";
+            this.tagIO1.Module = "Left";
             this.tagIO1.Name = "tagIO1";
             this.tagIO1.Size = new System.Drawing.Size(75, 23);
             this.tagIO1.Sort = "PushButton";
@@ -644,7 +671,7 @@
             this.txtAllText.Name = "txtAllText";
             this.txtAllText.ReadOnly = true;
             this.txtAllText.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.txtAllText.Size = new System.Drawing.Size(277, 325);
+            this.txtAllText.Size = new System.Drawing.Size(290, 361);
             this.txtAllText.TabIndex = 86;
             this.txtAllText.WordWrap = false;
             // 
@@ -842,31 +869,101 @@
             this.stripError.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.stripError.ToolTipText = "Application errors";
             // 
-            // tagState2
+            // tagState4
             // 
-            this.tagState2.Checked = false;
-            this.tagState2.Location = new System.Drawing.Point(447, 35);
-            this.tagState2.Module = "Main";
-            this.tagState2.Name = "tagState2";
-            this.tagState2.Size = new System.Drawing.Size(103, 23);
-            this.tagState2.Sort = "MainState";
-            this.tagState2.State = "RUNHEIGHT";
-            this.tagState2.TabIndex = 27;
-            this.tagState2.Tag = "";
-            this.tagState2.Text = "DUMPTANK";
+            this.tagState4.Checked = false;
+            this.tagState4.Location = new System.Drawing.Point(447, 161);
+            this.tagState4.Module = "Left";
+            this.tagState4.Name = "tagState4";
+            this.tagState4.Size = new System.Drawing.Size(103, 23);
+            this.tagState4.Sort = "state";
+            this.tagState4.State = "Fill";
+            this.tagState4.TabIndex = 29;
+            this.tagState4.Tag = "";
+            this.tagState4.Text = "Fill";
             // 
-            // tagState3
+            // tagState5
             // 
-            this.tagState3.Checked = false;
-            this.tagState3.Location = new System.Drawing.Point(447, 64);
-            this.tagState3.Module = "Main";
-            this.tagState3.Name = "tagState3";
-            this.tagState3.Size = new System.Drawing.Size(103, 23);
-            this.tagState3.Sort = "MainState";
-            this.tagState3.State = "RUNHEIGHT";
-            this.tagState3.TabIndex = 28;
-            this.tagState3.Tag = "";
-            this.tagState3.Text = "DUMPINGTANK";
+            this.tagState5.Checked = false;
+            this.tagState5.Location = new System.Drawing.Point(447, 190);
+            this.tagState5.Module = "Left";
+            this.tagState5.Name = "tagState5";
+            this.tagState5.Size = new System.Drawing.Size(103, 23);
+            this.tagState5.Sort = "state";
+            this.tagState5.State = "Dump";
+            this.tagState5.TabIndex = 30;
+            this.tagState5.Tag = "";
+            this.tagState5.Text = "Dump";
+            // 
+            // tagState6
+            // 
+            this.tagState6.Checked = false;
+            this.tagState6.Location = new System.Drawing.Point(447, 132);
+            this.tagState6.Module = "Left";
+            this.tagState6.Name = "tagState6";
+            this.tagState6.Size = new System.Drawing.Size(103, 23);
+            this.tagState6.Sort = "state";
+            this.tagState6.State = "Hold";
+            this.tagState6.TabIndex = 31;
+            this.tagState6.Tag = "";
+            this.tagState6.Text = "Hold";
+            // 
+            // tagState7
+            // 
+            this.tagState7.Checked = false;
+            this.tagState7.Location = new System.Drawing.Point(614, 132);
+            this.tagState7.Module = "Right";
+            this.tagState7.Name = "tagState7";
+            this.tagState7.Size = new System.Drawing.Size(103, 23);
+            this.tagState7.Sort = "state";
+            this.tagState7.State = "Hold";
+            this.tagState7.TabIndex = 34;
+            this.tagState7.Tag = "";
+            this.tagState7.Text = "Hold";
+            // 
+            // tagState8
+            // 
+            this.tagState8.Checked = false;
+            this.tagState8.Location = new System.Drawing.Point(614, 190);
+            this.tagState8.Module = "Right";
+            this.tagState8.Name = "tagState8";
+            this.tagState8.Size = new System.Drawing.Size(103, 23);
+            this.tagState8.Sort = "state";
+            this.tagState8.State = "Dump";
+            this.tagState8.TabIndex = 33;
+            this.tagState8.Tag = "";
+            this.tagState8.Text = "Dump";
+            // 
+            // tagState9
+            // 
+            this.tagState9.Checked = false;
+            this.tagState9.Location = new System.Drawing.Point(614, 161);
+            this.tagState9.Module = "Right";
+            this.tagState9.Name = "tagState9";
+            this.tagState9.Size = new System.Drawing.Size(103, 23);
+            this.tagState9.Sort = "state";
+            this.tagState9.State = "Fill";
+            this.tagState9.TabIndex = 32;
+            this.tagState9.Tag = "";
+            this.tagState9.Text = "Fill";
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(471, 116);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(53, 13);
+            this.label4.TabIndex = 35;
+            this.label4.Text = "Left State";
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(639, 116);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(60, 13);
+            this.label6.TabIndex = 36;
+            this.label6.Text = "Right State";
             // 
             // FormMain
             // 
@@ -931,7 +1028,6 @@
         private MettleLib.TagIO tagIO1;
         private MettleLib.TagGauge tagGauge2;
         private MettleLib.TagText tagText4;
-        private MettleLib.TagText tagText3;
         private MettleLib.TagChart tagChart1;
         private MettleLib.TagText tagText7;
         private MettleLib.TagText tagText6;
@@ -945,6 +1041,14 @@
         private MettleLib.TagText tagText2;
         private MettleLib.TagState tagState3;
         private MettleLib.TagState tagState2;
+        private MettleLib.TagState tagState6;
+        private MettleLib.TagState tagState5;
+        private MettleLib.TagState tagState4;
+        private MettleLib.TagState tagState7;
+        private MettleLib.TagState tagState8;
+        private MettleLib.TagState tagState9;
+        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.Label label4;
     }
 }
 
