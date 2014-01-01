@@ -21,25 +21,44 @@
 #include "corner.h"
 #include "debug.h"
 #include "common.h"
+#include "eeprom.h"
 
 CCorner CornerLR(LeftRear);
 CCorner CornerRR(RightRear);
+CEEprom EEProm;
+
 const int PinTilt = 5;
 const int PinDumpTank = 2;
 
-static states_t state = RUNHEIGHT;
+static states_t state = RUNMANUAL;
 
-bool IsDumping = false;
-uint32_t SampleTime;
-int32_t LRfilter_reg; 
-int32_t RRfilter_reg; 
-int32_t LRFiltered;
-int32_t RRFiltered;
+uint32_t SampleTime;    
 
+//the height valuse that will level the coach to the horizon
+//when camping
+int16_t LeftLevel;
+int16_t RightLevel;
+
+//the current height readings
 int16_t LRheight;
 int16_t RRheight;
 int16_t SetPoint;
 int16_t Tilt;
+
+//the 2 mode bits define 3 valid states
+#define MODES_LIST(macro) \
+    macro(TRAVELMODE)   \
+    macro(MANUALMODE)   \
+    macro(AUTOMODE)     \
+    macro(AUTOCALMODE)  \
+    
+enum modes_t
+{
+  MODES_LIST(ENUMIFY)
+};
+
+static modes_t mode = MANUALMODE;
+static char *ModeStrs[] = {MODES_LIST(STRINGIFY)};
 
 #define MODULE "Main"
 #define MAINSTATE "MainState"
@@ -54,10 +73,7 @@ void setup()
   
   SampleTime = millis();
   
-  LRfilter_reg 		= (1024 - analogRead(A0)) << FILTER_SHIFT;
-  RRfilter_reg 		= (1024 - analogRead(A2)) << FILTER_SHIFT;
-  
-  SetState(RUNHEIGHT);
+  SetState(RUNMANUAL);
   
   pinMode(2, INPUT_PULLUP);
 }
@@ -81,6 +97,93 @@ void SetState(states_t s)
     }
 }
 
+//calculate the Left and right height values that will make the coach level
+void CaclulateLevel()
+{
+//todo...implement it!
+//handle not enough suspesion rage issues
+//handle travel limits, ranges stored in EEPROM
+    LeftLevel = 512;
+    RightLevel = 512;
+}
+
+//read all the inputs and change states accordingly
+void CheckEvents()
+{
+    //Low travel, high manual
+    switch(mode)
+    {
+        case TRAVELMODE: //TravelChanged())
+        {
+            switch(state)
+            {
+                //only switch states if in these states;
+                case RUNMANUAL:
+                case RUNHORIZON:
+                case DUMPTANK:
+                case DUMPINGTANK:
+                  SetState(RUNTRAVEL);
+                break;
+                
+                case RUNTRAVEL:
+                case CALLIMITS:
+                case CALLOW:
+                case CALHIGH:
+                case CALTRAVEL:
+                case CALAUTO:
+                break; //no change allowed
+            }   
+        }
+        break;
+        case MANUALMODE:
+        { 
+            switch(state)
+            {
+                //only switch states if in these states;
+                case RUNTRAVEL:
+                case RUNHORIZON:
+                case DUMPTANK:
+                case DUMPINGTANK:
+                    SetState(RUNMANUAL);
+                break;
+                
+                case RUNMANUAL:
+                case CALLIMITS:
+                case CALLOW:
+                case CALHIGH:
+                case CALTRAVEL:
+                case CALAUTO:
+                break; //no change allowed
+            } 
+
+        }
+        break;
+        case AUTOMODE:
+        {
+            switch(state)
+            {
+                //only switch states if in these states;
+                case RUNMANUAL:
+                case RUNTRAVEL:
+                case DUMPTANK:
+                case DUMPINGTANK:
+                    SetState(RUNHORIZON);
+                break;
+                
+                case RUNHORIZON:
+                case CALLIMITS:
+                case CALLOW:
+                case CALHIGH:
+                case CALTRAVEL:
+                case CALAUTO:
+                break; //no change allowed
+            }
+        }
+        break;
+    }
+    
+}
+
 void loop() 
 {
     LRheight = 1024 - analogRead(A0);
@@ -94,16 +197,7 @@ void loop()
     //decreasing value (<512) means raise left side, Lover right side
     
     if(IsTimedOut(100, SampleTime))
-    {
-  	
-        // Update filter with current sample.
-		LRfilter_reg = LRfilter_reg - (LRfilter_reg >> FILTER_SHIFT) + LRheight;
-        RRfilter_reg = RRfilter_reg - (RRfilter_reg >> FILTER_SHIFT) + RRheight;
-        // Scale output for unity gain.
-        LRFiltered = (LRfilter_reg >> FILTER_SHIFT);
-        RRFiltered = (RRfilter_reg >> FILTER_SHIFT);
-        
-        
+    {      
         Log(MODULE, "LRHeight", LRheight);
         Log(MODULE, "RRHeight", RRheight);
         Log(MODULE, "SetPoint", SetPoint);
@@ -112,18 +206,34 @@ void loop()
         SampleTime = millis();
     }
 
+    CheckEvents();
     
     switch(state)
     {
-        case RUNHEIGHT: 
-            CornerLR.Run(0-Tilt);
+        //Manual leveling
+        case RUNMANUAL: 
+            CornerLR.Run(0-Tilt);  
             CornerRR.Run(Tilt);
-            
-            if(LOW == digitalRead(PinDumpTank))
-            {
-                SetState(DUMPTANK);
-            }
             break;
+            
+        //Run at the calibrated travel height
+        //todo change update frequency once car moves
+        case RUNTRAVEL:
+
+            CornerLR.Run(EEProm.GetLeftCal());  
+            CornerRR.Run(EEProm.GetRightCal());  
+            break;
+            
+        //Auto level to the horizon
+        case RUNHORIZON:
+            //read accel
+            CaclulateLevel();
+            CornerLR.Run(LeftLevel);  
+            CornerRR.Run(RightLevel);
+            break;
+            
+        //open all valves and dump all air from the system
+        //as long as switch is closed
         case DUMPTANK:
             //open all valves to dump all air from system
             CornerLR.Fill(Open);
@@ -134,6 +244,7 @@ void loop()
             
             SetState(DUMPINGTANK);
             break;
+            
          case DUMPINGTANK:
             //wait for user to release button, then close all valves
             if(HIGH == digitalRead(PinDumpTank))
@@ -144,11 +255,28 @@ void loop()
                 CornerRR.Fill(Closed);
                 CornerRR.Dump(Closed);
                 
-                SetState(RUNHEIGHT);
+                SetState(RUNMANUAL);
             }
             break;
+            
+        //raise and lower the coach to find the upper and lower limits of travel 
+        //must be in travelmode before pressing cal button
+        case CALLIMITS:
+        break;
+        case CALLOW:
+        break;
+        case CALHIGH:
+        break;
+        //Read and save current height as the new travel position
+        //must be in manual mode and at ride height before pressing cal button
+        case CALTRAVEL:
+        break;
+        //read and save the current accelerometer position as level
+        //must be in Calautomode and level before pressing button
+        case CALAUTO:
+        break;
         default:
-            SetState(RUNHEIGHT);
+            SetState(RUNMANUAL);
     }
   
 }

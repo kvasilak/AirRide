@@ -16,30 +16,24 @@
 ** You should have received a copy of the GNU General Public License along with MegaRide. If not, see
 ** http://www.gnu.org/licenses/.
 **
-**    common.h
+**    EEprom.h
 **************************************************************************/
-#ifndef INCLUDE_COMMON_H
-#define INCLUDE_COMMON_H
+#ifndef INCLUDE_EEPROM_H
+#define INCLUDE_EEPROM_H
 
-#include "debug.h"
+#include <stdint.h>
 
-#define STATES_LIST(macro)\
-    macro(RUNMANUAL)    \
-    macro(RUNTRAVEL)    \
-    macro(RUNHORIZON)   \
-    macro(DUMPTANK)     \
-    macro(DUMPINGTANK)  \
-    macro(CALLIMITS)    \
-    macro(CALLOW)       \
-    macro(CALHIGH)      \
-    macro(CALTRAVEL)    \
-    macro(CALAUTO)      \
-
-    
-enum states_t
+class CEEprom
 {
-  STATES_LIST(ENUMIFY)
+    public:
+    CEEprom();
+    
+    void ReadEEprom();
+    void WriteEEprom();
+    
+    int16_t GetLeftCal();
+    int16_t GetRightCal();
+    
 };
-
 
 #endif
