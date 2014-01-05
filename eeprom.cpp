@@ -42,3 +42,18 @@ int16_t CEEprom::GetRightCal()
     return 512;
 }
 
+void CEEprom::SaveLeftHeight(int16_t v)
+{
+}
+
+void CEEprom::SaveRightHeight(int16_t v)
+{
+}
+
+void CEEprom::SaveLeftAuto(int16_t v)
+{
+}
+
+void CEEprom::SaveRightAuto(int16_t v)
+{
+}

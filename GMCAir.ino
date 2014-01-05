@@ -28,11 +28,14 @@ CCorner CornerRR(RightRear);
 CEEprom EEProm;
 
 const int PinTilt = 5;
-const int PinDumpTank = 2;
+const int PinDumpTank = A5;
+const int Mode1 = 5;
+const int Mode2 = 6;
 
 static states_t state = RUNMANUAL;
 
 uint32_t SampleTime;    
+uint32_t CalDoneTime;
 
 //the height valuse that will level the coach to the horizon
 //when camping
@@ -44,21 +47,25 @@ int16_t LRheight;
 int16_t RRheight;
 int16_t SetPoint;
 int16_t Tilt;
+int16_t LeftHeight;
+int16_t RightHeight;
+int16_t LeftAuto;
+int16_t RightAuto;
 
-//the 2 mode bits define 3 valid states
-#define MODES_LIST(macro) \
-    macro(TRAVELMODE)   \
+//the 2 mode bits define 4 valid states
+/* #define MODES_LIST(macro) \
     macro(MANUALMODE)   \
+    macro(TRAVELMODE)   \
     macro(AUTOMODE)     \
     macro(AUTOCALMODE)  \
     
 enum modes_t
 {
   MODES_LIST(ENUMIFY)
-};
+}; */
 
-static modes_t mode = MANUALMODE;
-static char *ModeStrs[] = {MODES_LIST(STRINGIFY)};
+static states_t mode = MANUALMODE;
+//static char *ModeStrs[] = {MODES_LIST(STRINGIFY)};
 
 #define MODULE "Main"
 #define MAINSTATE "MainState"
@@ -107,81 +114,201 @@ void CaclulateLevel()
     RightLevel = 512;
 }
 
+//input is analog
+//if at zero ( <342) it it means calibrate
+//if at 1/2 ( 342><682 ) it means dump tanks
+//if > 682 it means nothing is pressed
+bool DumpTank()
+{
+    int a = analogRead(A4);
+    bool pressed = false;
+    
+    if( ( a > 342) && (a < 682) )
+    {
+        pressed = true;
+    }
+}
+
+//only called when appropriate
+//button must transition as follows
+//not pressed
+//pressed for 5 seconds
+//released
+//once released were in calibrate mode
+bool Calibrate()
+{
+    static int calstate = 0;
+    bool docal = false;
+    bool pressed = false;
+    uint32_t pressstart;
+    
+    if(analogRead(A4) < 342)
+    {
+        pressed = true;
+    }
+    
+    switch(calstate)
+    {
+        case 0: //unpressed
+            if(!pressed)
+            {
+                pressstart = millis();
+                calstate++;
+            }
+            break;
+        case 1: //pressed
+            if(pressed)
+            {
+                if(IsTimedOut(5000, pressstart))
+                {
+                    calstate++;
+                }
+            }
+            else
+            {
+                //user let go too soon
+                calstate = 0;
+            }
+            break;
+        case 2: //wait for release
+            if(!pressed)
+            {
+                docal = true;
+                calstate=0;
+            }
+            break;
+    }
+    
+    return docal;
+}
+
+void GetMode()
+{
+    int m = digitalRead(Mode1);
+    
+    m &= digitalRead(Mode2) << 2;
+    
+    mode = (states_t)m;
+}
+
 //read all the inputs and change states accordingly
 void CheckEvents()
 {
-    //Low travel, high manual
-    switch(mode)
-    {
-        case TRAVELMODE: //TravelChanged())
-        {
-            switch(state)
-            {
-                //only switch states if in these states;
-                case RUNMANUAL:
-                case RUNHORIZON:
-                case DUMPTANK:
-                case DUMPINGTANK:
-                  SetState(RUNTRAVEL);
-                break;
-                
-                case RUNTRAVEL:
-                case CALLIMITS:
-                case CALLOW:
-                case CALHIGH:
-                case CALTRAVEL:
-                case CALAUTO:
-                break; //no change allowed
-            }   
-        }
-        break;
-        case MANUALMODE:
-        { 
-            switch(state)
-            {
-                //only switch states if in these states;
-                case RUNTRAVEL:
-                case RUNHORIZON:
-                case DUMPTANK:
-                case DUMPINGTANK:
-                    SetState(RUNMANUAL);
-                break;
-                
-                case RUNMANUAL:
-                case CALLIMITS:
-                case CALLOW:
-                case CALHIGH:
-                case CALTRAVEL:
-                case CALAUTO:
-                break; //no change allowed
-            } 
-
-        }
-        break;
-        case AUTOMODE:
-        {
-            switch(state)
-            {
-                //only switch states if in these states;
-                case RUNMANUAL:
-                case RUNTRAVEL:
-                case DUMPTANK:
-                case DUMPINGTANK:
-                    SetState(RUNHORIZON);
-                break;
-                
-                case RUNHORIZON:
-                case CALLIMITS:
-                case CALLOW:
-                case CALHIGH:
-                case CALTRAVEL:
-                case CALAUTO:
-                break; //no change allowed
-            }
-        }
-        break;
-    }
+    GetMode();
     
+    switch(state)
+    {
+        //only switch states if in these states;
+        case RUNTRAVEL:
+            switch(mode)
+            {
+                case MANUALMODE:
+                case AUTOMODE:
+                case AUTOCALMODE:
+                SetState(mode);
+                break;
+                //No mode change
+                case TRAVELMODE:
+                //find the high and low limits
+                if(Calibrate())
+                {
+                    SetState(CALLIMITS);
+                }
+                //what are the chances of dumptank and calibrate being pressed at the exact same time?
+                if(DumpTank())
+                {
+                    SetState(DUMPTANK);
+                }
+                break;
+            }
+            break;
+        case RUNMANUAL:
+            switch(mode)
+            {
+                case TRAVELMODE:
+                case AUTOMODE:
+                case AUTOCALMODE:
+                SetState(mode);
+                break;
+                case MANUALMODE:
+                //save the current height as the travel height
+                if(Calibrate())
+                {
+                    EEProm.SaveLeftHeight(LeftHeight); 
+                    EEProm.SaveRightHeight(RightHeight);
+                    EEProm.WriteEEprom();
+                    SetState(CALDONE);
+                }
+                
+                if(DumpTank())
+                {
+                    SetState(DUMPTANK);
+                }
+                break;
+            }
+            break;
+        case RUNAUTO:
+            switch(mode)//no calibration to do
+            {
+                case TRAVELMODE:
+                case MANUALMODE:
+                case AUTOCALMODE:
+                SetState(mode);
+                break;
+                case AUTOMODE:
+                if(DumpTank())
+                {
+                    SetState(DUMPTANK);
+                }
+                break;
+            }
+            break;
+        case RUNAUTOCAL:
+            switch(mode)
+            {
+                case TRAVELMODE:
+                case MANUALMODE:
+                case AUTOMODE:
+                SetState(mode);
+                break;
+                case AUTOCALMODE:
+                //Save the accelerometer values for level
+                if(Calibrate())
+                { 
+                    EEProm.SaveLeftAuto(LeftAuto);
+                    EEProm.SaveRightAuto(RightAuto);
+                    SetState(CALDONE);
+                }
+                
+                if(DumpTank())
+                {
+                    SetState(DUMPTANK);
+                }
+                break;
+            }
+            break;
+        //no mode change allowed until the user lets go of the dump button, or we'd just end up back here
+        case DUMPTANK:
+        case DUMPINGTANK:
+        //no change allowed during limit calibration
+        case CALLIMITS: 
+        case CALLOW:
+        case CALHIGH:
+        case CALDONE:
+        break; 
+        //now back to our current mode
+        case CALCOMPLETE:
+            switch(mode)
+            {
+                case TRAVELMODE:
+                case MANUALMODE:
+                case AUTOMODE:
+                case AUTOCALMODE:
+                SetState(mode);
+                break;
+            }
+        break;
+    }   
 }
 
 void loop() 
@@ -219,17 +346,24 @@ void loop()
         //Run at the calibrated travel height
         //todo change update frequency once car moves
         case RUNTRAVEL:
-
             CornerLR.Run(EEProm.GetLeftCal());  
             CornerRR.Run(EEProm.GetRightCal());  
             break;
             
         //Auto level to the horizon
-        case RUNHORIZON:
+        case RUNAUTO:
             //read accel
             CaclulateLevel();
             CornerLR.Run(LeftLevel);  
             CornerRR.Run(RightLevel);
+            break;
+            
+        //manually level the coach to the horizon
+        //then press caibrate to save the acellerometer values
+        //to use for autoleveling
+        case RUNAUTOCAL:
+            CornerLR.Run(0-Tilt);  
+            CornerRR.Run(Tilt);
             break;
             
         //open all valves and dump all air from the system
@@ -247,7 +381,7 @@ void loop()
             
          case DUMPINGTANK:
             //wait for user to release button, then close all valves
-            if(HIGH == digitalRead(PinDumpTank))
+            if(!DumpTank())
             {
                 CornerLR.Fill(Closed);
                 CornerLR.Dump(Closed);
@@ -255,26 +389,35 @@ void loop()
                 CornerRR.Fill(Closed);
                 CornerRR.Dump(Closed);
                 
-                SetState(RUNMANUAL);
+                //allow the event handler to switch us back to the current state
+                SetState(CALCOMPLETE);
             }
             break;
             
         //raise and lower the coach to find the upper and lower limits of travel 
         //must be in travelmode before pressing cal button
         case CALLIMITS:
-        break;
+            SetState(CALLOW);
+            break;
         case CALLOW:
-        break;
+            SetState(CALHIGH);
+            break;
         case CALHIGH:
-        break;
-        //Read and save current height as the new travel position
-        //must be in manual mode and at ride height before pressing cal button
-        case CALTRAVEL:
-        break;
-        //read and save the current accelerometer position as level
-        //must be in Calautomode and level before pressing button
-        case CALAUTO:
-        break;
+            CalDoneTime = millis();
+            SetState(CALDONE);
+            break;
+        
+         //done with cal, show cal LED for 1 sec
+        case CALDONE:
+            //can we light up an LED on entry??
+            if(IsTimedOut(1000, CalDoneTime))
+            {
+                SetState(CALCOMPLETE);
+            }
+            break;
+        //wait for user to release cal button
+        case CALCOMPLETE:
+            break;
         default:
             SetState(RUNMANUAL);
     }

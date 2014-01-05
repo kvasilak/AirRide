@@ -25,15 +25,20 @@
 
 #define STATES_LIST(macro)\
     macro(RUNMANUAL)    \
+    macro(MANUALMODE = RUNMANUAL)    \
     macro(RUNTRAVEL)    \
-    macro(RUNHORIZON)   \
+    macro(TRAVELMODE = RUNTRAVEL)    \
+    macro(RUNAUTO)      \
+    macro(AUTOMODE = RUNAUTO)      \
+    macro(RUNAUTOCAL)   \
+    macro(AUTOCALMODE = RUNAUTOCAL)   \
     macro(DUMPTANK)     \
     macro(DUMPINGTANK)  \
     macro(CALLIMITS)    \
     macro(CALLOW)       \
     macro(CALHIGH)      \
-    macro(CALTRAVEL)    \
-    macro(CALAUTO)      \
+    macro(CALDONE)      \
+    macro(CALCOMPLETE)  \
 
     
 enum states_t

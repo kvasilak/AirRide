@@ -34,6 +34,9 @@ class CEEprom
     int16_t GetLeftCal();
     int16_t GetRightCal();
     
+    void SaveLeftHeight(int16_t v);
+    void SaveRightHeight(int16_t v);
+    void SaveLeftAuto(int16_t v);
+    void SaveRightAuto(int16_t v);
 };
-
 #endif
