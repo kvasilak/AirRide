@@ -16,22 +16,14 @@
 ** You should have received a copy of the GNU General Public License along with MegaRide. If not, see
 ** http://www.gnu.org/licenses/.
 **
-**    GMCAit.ino
+**    common.cpp
 **************************************************************************/
+#include <Arduino.h>
+#include <stdint.h>
 
-#include "debug.h"
-#include "airride.h"
-
-CAirRide AirRide;
-
-void setup() 
+//return true if it's been period ms since start
+bool IsTimedOut(uint32_t period, uint32_t start)
 {
-    Serial.begin(9600);
-
-    AirRide.Init();
-}
-
-void loop()
-{
-    AirRide.Run();
+  uint32_t current = millis();
+  return(current - start > period);
 }

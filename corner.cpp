@@ -23,26 +23,26 @@
 #include <stdint.h>
 #include "corner.h"
 #include "debug.h"
+#include "common.h"
 
 
 //This class is responsible for managing the height of a corner.
 //There is one instance of this class for each corner of the vehicle usually 4
 //This is where the decisions are made as to add or remove air from the suspension
-CCorner::CCorner(Position p):
-DeadBand(DEAD_BAND),//ADC counts 0-1024
-HoldDeadBand(HOLD_DEAD_BAND),
-CycleTime(100), //ms between updates
-State(LastState),
-PinDumpRightRear(10), //set IO pins here
-PinDumpLeftRear(8),
-PinFillRightRear(11),
-PinFillLeftRear(7),
-PinHeightLeftRear(A0),   //analog in
-PinHeightRghtRear(A2),   //analog in
-PinSetpoint(A3),          //analong in setpoint pot
-HoldOffTime(2000)
+CCorner::CCorner()://Position p):
+  DeadBand(DEAD_BAND),//ADC counts 0-1024
+  HoldDeadBand(HOLD_DEAD_BAND),
+  CycleTime(100), //ms between updates
+  State(LastState),
+  PinDumpRightRear(10), //set IO pins here
+  PinDumpLeftRear(8),
+  PinFillRightRear(11),
+  PinFillLeftRear(7),
+  PinHeightLeftRear(A0),   //analog in
+  PinHeightRghtRear(A2),   //analog in
+  PinSetpoint(A3),          //analong in setpoint pot
+  HoldOffTime(2000)
 {
-	corner = p;
 
 	LastTime 		= millis();
     HoldOff         = millis();
@@ -63,11 +63,9 @@ HoldOffTime(2000)
     //analog in pins need no setup
 }
 
-//return true if it's been period ms since start
-bool CCorner::IsTimedOut(uint32_t period, uint32_t start)
+void CCorner::Init(Position p)
 {
-  uint32_t current = millis();
-  return(current - start > period);
+    corner = p;
 }
 
 //Get the height of this corner

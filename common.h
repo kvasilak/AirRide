@@ -46,5 +46,6 @@ enum states_t
   STATES_LIST(ENUMIFY)
 };
 
+bool IsTimedOut(uint32_t period, uint32_t start);
 
 #endif

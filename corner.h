@@ -57,11 +57,12 @@ enum ValveOp
 class CCorner 
 {
 	public:
-	CCorner(Position c);
+	CCorner();//Position c);
 	void Run(int16_t tilt);
     void Fill(Solenoid state);
     void Dump(Solenoid state);
     void PrintCorner();
+    void Init(Position p);
   
 	private:
 	int16_t DeadBand;			//how far the corner has to move before we try to adjust the position
@@ -82,7 +83,6 @@ class CCorner
     int PinFillRightRear;
     int PinSetpoint;
     
-    bool IsTimedOut(uint32_t period, uint32_t start);
     int16_t GetHeight();
     void SetState(ValveOp s);
 
