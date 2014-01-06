@@ -57,3 +57,7 @@ void CEEprom::SaveLeftAuto(int16_t v)
 void CEEprom::SaveRightAuto(int16_t v)
 {
 }
+
+void CEEprom::SaveLimits(int16_t leftlow, int16_t lefthigh, int16_t rightlow, int16_t righthigh)
+{
+}

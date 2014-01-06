@@ -38,5 +38,6 @@ class CEEprom
     void SaveRightHeight(int16_t v);
     void SaveLeftAuto(int16_t v);
     void SaveRightAuto(int16_t v);
+    void SaveLimits(int16_t leftlow, int16_t lefthigh, int16_t rightlow, int16_t righthigh);
 };
 #endif

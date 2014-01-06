@@ -40,7 +40,7 @@ CCorner::CCorner()://Position p):
   PinFillLeftRear(7),
   PinHeightLeftRear(A0),   //analog in
   PinHeightRghtRear(A2),   //analog in
-  PinSetpoint(A3),          //analong in setpoint pot
+  PinSetpoint(A3),          //analog in setpoint pot
   HoldOffTime(2000)
 {
 
@@ -66,6 +66,10 @@ CCorner::CCorner()://Position p):
 void CCorner::Init(Position p)
 {
     corner = p;
+}
+void CCorner::Limits(int16_t Low, int16_t high)
+{
+
 }
 
 //Get the height of this corner

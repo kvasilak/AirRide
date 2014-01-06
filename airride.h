@@ -32,15 +32,19 @@ class CAirRide
     CAirRide();
     
     void Init();
+    void Run();
+    
+    private:    
     void SetState(states_t s);
     void CaclulateLevel();
     bool DumpTank();
     bool Calibrate();
     void GetMode();
     void CheckEvents();
-    void Run();
+    bool AllDown(int left, int right);
+    bool AllUp(int left, int right);
+    void CalLED(bool on);
     
-    private:
     CCorner CornerLR; //LeftRear);
     CCorner CornerRR; //RightRear);
     CEEprom EEProm;
@@ -49,6 +53,7 @@ class CAirRide
     const int PinDumpTank;// = A5;
     const int Mode1;// = 5;
     const int Mode2;// = 6;
+    const int CalPin;
 
     states_t state;// = RUNMANUAL;
 
@@ -72,7 +77,10 @@ class CAirRide
     
     states_t mode;// = MANUALMODE;
 
-    //char *StateStrs[] = {STATES_LIST(STRINGIFY)};
+    int16_t LeftLowLimit;
+    int16_t LeftHighLimit;
+    int16_t RightLowLimit;
+    int16_t RightHighLimit;
 
 };
 

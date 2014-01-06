@@ -26,14 +26,15 @@
 #include "airride.h"
 
 
-#define MODULE "Main"
+#define MODULE "AirRide"
 #define MAINSTATE "MainState"
 
 CAirRide::CAirRide() :
 PinTilt(5),
 PinDumpTank(A5),
 Mode1(5),
-Mode2(6)
+Mode2(6),
+CalPin(7)
 {
 
 }
@@ -47,6 +48,9 @@ void CAirRide::Init()
     SetState(RUNMANUAL);
 
     pinMode(2, INPUT_PULLUP);
+    pinMode(Mode1, INPUT_PULLUP);
+    pinMode(Mode2, INPUT_PULLUP);
+    pinMode(CalPin, INPUT_PULLUP);
   
     CornerLR.Init(LeftRear); 
     CornerRR.Init(RightRear);
@@ -56,10 +60,11 @@ void CAirRide::Init()
 void CAirRide::SetState(states_t s)
 {
     static states_t laststate = DUMPINGTANK;
+    static char *statestrs[] = {STATES_LIST(STRINGIFY)};
     
     if(s != laststate)
     {
-        //Log(MODULE, "MainState", StateStrs[s]);
+        Log(MODULE, "MainState", statestrs  [s]);
         laststate = s;
     }
 }
@@ -75,15 +80,13 @@ void CAirRide::CaclulateLevel()
 }
 
 //input is analog
-//if at zero ( <342) it it means calibrate
-//if at 1/2 ( 342><682 ) it means dump tanks
-//if > 682 it means nothing is pressed
+//if at zero (<512) button is pressed
 bool CAirRide::DumpTank()
 {
     int a = analogRead(A4);
     bool pressed = false;
     
-    if( ( a > 342) && (a < 682) )
+    if( a < 512 )
     {
         pressed = true;
     }
@@ -91,7 +94,7 @@ bool CAirRide::DumpTank()
 
 //only called when appropriate
 //button must transition as follows
-//not pressed
+//not pressed for at least 5 seconds
 //pressed for 5 seconds
 //released
 //once released were in calibrate mode
@@ -99,43 +102,53 @@ bool CAirRide::Calibrate()
 {
     static int calstate = 0;
     bool docal = false;
-    bool pressed = false;
-    uint32_t pressstart;
+    static uint32_t pressstart;
     
-    if(analogRead(A4) < 342)
-    {
-        pressed = true;
-    }
+    bool pressed = (LOW == digitalRead(CalPin));
+
     
     switch(calstate)
     {
-        case 0: //unpressed
+        case 0: 
+            //don't start timer until button is not pressed
             if(!pressed)
             {
                 pressstart = millis();
                 calstate++;
             }
             break;
-        case 1: //pressed
+        case 1: 
             if(pressed)
             {
                 if(IsTimedOut(5000, pressstart))
                 {
+                    //Button not pressed long enough!
+                    //Now wait another 5 seconds
+                    pressstart = millis();
                     calstate++;
                 }
+                else
+                {
+                    //button pressed too soon, restart timer
+                    calstate = 0;
+                }
             }
-            else
-            {
-                //user let go too soon
-                calstate = 0;
-            }
-            break;
-        case 2: //wait for release
+        
+        case 2:
             if(!pressed)
             {
-                docal = true;
-                calstate=0;
-            }
+                if(IsTimedOut(5000, pressstart))
+                {
+                    //user completed the magic sequence, calibrate!
+                    docal = true;
+                    calstate=0;
+                }
+                else
+                {
+                    //user let go too soon
+                    calstate = 0;
+                }
+            }  
             break;
     }
     
@@ -149,6 +162,8 @@ void CAirRide::GetMode()
     m &= digitalRead(Mode2) << 2;
     
     mode = (states_t)m;
+    
+    Log(MODULE, "Mode", mode);
 }
 
 //read all the inputs and change states accordingly
@@ -197,7 +212,7 @@ void CAirRide::CheckEvents()
                     EEProm.SaveLeftHeight(LeftHeight); 
                     EEProm.SaveRightHeight(RightHeight);
                     EEProm.WriteEEprom();
-                    SetState(CALDONE);
+                    SetState(CALDONELED);
                 }
                 
                 if(DumpTank())
@@ -233,11 +248,12 @@ void CAirRide::CheckEvents()
                 break;
                 case AUTOCALMODE:
                 //Save the accelerometer values for level
+                //Assumes the coach is currently level
                 if(Calibrate())
                 { 
                     EEProm.SaveLeftAuto(LeftAuto);
                     EEProm.SaveRightAuto(RightAuto);
-                    SetState(CALDONE);
+                    SetState(CALDONELED);
                 }
                 
                 if(DumpTank())
@@ -254,6 +270,7 @@ void CAirRide::CheckEvents()
         case CALLIMITS: 
         case CALLOW:
         case CALHIGH:
+        case CALDONELED:
         case CALDONE:
         break; 
         //now back to our current mode
@@ -269,6 +286,107 @@ void CAirRide::CheckEvents()
             }
         break;
     }   
+}
+
+//used to calibrate height limits.
+//the coach may not have travel from 0 to 1024
+//wait for both heights to be all the way down
+//determined by the height changing less that 2 counts in 1 second
+//Waits 10 seconds for the cases where it is slow to start or stop moving
+bool CAirRide::AllDown(int left, int right)
+{
+    static int oldleft = left;
+    static int oldright = right;
+    static uint32_t timeout = millis();
+    static uint32_t mintime = millis();
+     
+    bool leftdown = false;
+    bool rightdown = false;
+    bool alldown = false;
+    
+    if(IsTimedOut(1000, timeout))
+    {
+        //less than 2 counts in 1 second means we're all the way down
+        if(oldleft - left < 2)
+        {
+            leftdown = true;
+        }
+        
+        if(oldright - right < 2)
+        {
+            rightdown = true;
+        }
+        
+        //both heights stopped moving and we have waited at least 10 seconds
+        if((leftdown && rightdown)&& IsTimedOut(10000, mintime))
+        {
+            alldown = true;
+            LeftLowLimit = left;
+            RightLowLimit = right;
+        }
+        
+        timeout = millis();
+        oldleft = left;
+        oldright = right;
+    }
+    return alldown;
+}
+
+//see all down comments
+bool CAirRide::AllUp(int left, int right)
+{
+    static int oldleft = left;
+    static int oldright = right;
+    static uint32_t timeout = millis();
+    static uint32_t mintime = millis();
+    
+    bool leftup = false;
+    bool rightup = false;
+    bool allup = false;
+    
+    if(IsTimedOut(1000, timeout))
+    {
+        //less than 2 counts in 1 second means we're all the way down
+        if(left - oldleft < 2)
+        {
+            leftup = true;
+        }
+        
+        if(right - oldright < 2)
+        {
+            rightup = true;
+        }
+        
+        //both heights stopped moving and we have waited at least 10 seconds
+        if((leftup && rightup) && IsTimedOut(10000, mintime))
+        {
+            allup = true;
+            LeftHighLimit = left;
+            RightHighLimit = right;
+        }
+        
+        timeout = millis();
+        oldleft = left;
+        oldright = right;
+    }
+    return allup;
+}
+
+//turn on Cal LED
+void CAirRide::CalLED( bool on)
+{
+    if(on)
+    {
+        //make output and turn on LED
+        pinMode(CalPin, OUTPUT);
+        digitalWrite(CalPin, HIGH);
+    }
+    else
+    {
+        digitalWrite(CalPin, LOW);
+        pinMode(CalPin, INPUT_PULLUP);
+        
+    }
 }
 
 void CAirRide::Run() 
@@ -304,7 +422,7 @@ void CAirRide::Run()
             break;
             
         //Run at the calibrated travel height
-        //todo change update frequency once car moves
+        //todo change update frequency 
         case RUNTRAVEL:
             CornerLR.Run(EEProm.GetLeftCal());  
             CornerRR.Run(EEProm.GetRightCal());  
@@ -357,25 +475,55 @@ void CAirRide::Run()
         //raise and lower the coach to find the upper and lower limits of travel 
         //must be in travelmode before pressing cal button
         case CALLIMITS:
+            //turn on Cel LED at start of calibration cycle
+            CalLED(true);
+            
+            CornerLR.Dump(Open);
+            CornerLR.Dump(Open);
             SetState(CALLOW);
             break;
         case CALLOW:
-            SetState(CALHIGH);
+            //wait for height to stop changing
+            if(AllDown(LRheight, RRheight))
+            {
+                CornerLR.Dump(Closed);
+                CornerLR.Dump(Closed);
+                CornerLR.Fill(Open);     
+                CornerRR.Fill(Open);
+                
+                SetState(CALHIGH);
+            }
             break;
         case CALHIGH:
-            CalDoneTime = millis();
+            if(AllUp(LRheight, RRheight))
+            {
+                CornerLR.Fill(Closed);     
+                CornerRR.Fill(Closed);
+                
+                SetState(CALSAVELIMITS);
+            }
+            break;
+        case CALSAVELIMITS:
+            EEProm.SaveLimits(LeftLowLimit, LeftHighLimit, RightLowLimit, RightHighLimit);
+           
+            CornerLR.Limits(LeftLowLimit, LeftHighLimit);
+            CornerRR.Limits(RightLowLimit, RightHighLimit);
+            
             SetState(CALDONE);
             break;
-        
-         //done with cal, show cal LED for 1 sec
+         //done with cal, show cal LED for 1 sec 
+        case CALDONELED:
+            CalLED(true);
+            SetState(CALDONE);
+            break;
         case CALDONE:
-            //can we light up an LED on entry??
+
             if(IsTimedOut(1000, CalDoneTime))
             {
+                CalLED(false);
                 SetState(CALCOMPLETE);
             }
             break;
-        //wait for user to release cal button
         case CALCOMPLETE:
             break;
         default:

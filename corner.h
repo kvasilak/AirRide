@@ -63,6 +63,7 @@ class CCorner
     void Dump(Solenoid state);
     void PrintCorner();
     void Init(Position p);
+    void Limits(int16_t Low, int16_t high);
   
 	private:
 	int16_t DeadBand;			//how far the corner has to move before we try to adjust the position
