@@ -209,9 +209,8 @@ void CAirRide::CheckEvents()
                 //save the current height as the travel height
                 if(Calibrate())
                 {
-                    EEProm.SaveLeftHeight(LeftHeight); 
-                    EEProm.SaveRightHeight(RightHeight);
-                    EEProm.WriteEEprom();
+                    EEProm.SaveLeftTravel(LeftHeight); 
+                    EEProm.SaveRightTravel(RightHeight);
                     SetState(CALDONELED);
                 }
                 
@@ -424,8 +423,8 @@ void CAirRide::Run()
         //Run at the calibrated travel height
         //todo change update frequency 
         case RUNTRAVEL:
-            CornerLR.Run(EEProm.GetLeftCal());  
-            CornerRR.Run(EEProm.GetRightCal());  
+            CornerLR.Run(EEProm.GetLeftTravel());  
+            CornerRR.Run(EEProm.GetRightTravel());  
             break;
             
         //Auto level to the horizon

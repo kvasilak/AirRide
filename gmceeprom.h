@@ -28,16 +28,29 @@ class CEEprom
     public:
     CEEprom();
     
-    void ReadEEprom();
-    void WriteEEprom();
+    int16_t GetLeftTravel();
+    int16_t GetRightTravel();
+    int16_t GetLeftAuto();
+    int16_t GetRightAuto();
+    void GetLimits(int16_t *leftlow, int16_t *lefthigh, int16_t *rightlow, int16_t *righthigh);
     
-    int16_t GetLeftCal();
-    int16_t GetRightCal();
-    
-    void SaveLeftHeight(int16_t v);
-    void SaveRightHeight(int16_t v);
+    void SaveLeftTravel(int16_t v);
+    void SaveRightTravel(int16_t v);
     void SaveLeftAuto(int16_t v);
     void SaveRightAuto(int16_t v);
     void SaveLimits(int16_t leftlow, int16_t lefthigh, int16_t rightlow, int16_t righthigh);
+    
+    private:
+    void SaveInt(int address, int16_t v);
+    int16_t ReadInt(int address);
+    
+    const int LeftTravelHeightAddr;
+    const int RightTravelHeightAddr;
+    const int LeftAutoHeightAddr;
+    const int RightAutoHeightAddr;
+    const int LeftLowAddr;
+    const int LeftHighAddr;
+    const int RightLowAddr;
+    const int RightHightAddr;
 };
 #endif
