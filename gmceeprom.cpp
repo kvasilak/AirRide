@@ -131,9 +131,9 @@ void CEEprom::SaveLimits(int16_t leftlow, int16_t lefthigh, int16_t rightlow, in
 
 void CEEprom::SaveInt(int address, int16_t v)
 {
-    EEPROM.write(address, (int)(v & 0xFF));
+    EEPROM.write(address, (v & 0xFF));
     
-    EEPROM.write(address+1, (int)(v >> 8));
+    EEPROM.write(address+1, (v >> 8));
 }
 
 int16_t CEEprom::ReadInt(int address)
