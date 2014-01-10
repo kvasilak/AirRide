@@ -26,8 +26,10 @@
 #include "airride.h"
 
 
-#define MODULE "AirRide"
-#define MAINSTATE "MainState"
+//#define MODULE "AirRide"
+
+static char MODULE[] = {"AirRide"};
+static char CALSTATE[] = {"CalState"};
 
 CAirRide::CAirRide() :
 PinTilt(5),
@@ -43,7 +45,7 @@ void CAirRide::Init()
 {
     Serial.println("*******GMC Air Ride Controller V1.0*********");
 
-    SampleTime = millis();
+    //SampleTime = millis();
 
     SetState(RUNMANUAL);
 
@@ -54,6 +56,11 @@ void CAirRide::Init()
   
     CornerLR.Init(LeftRear); 
     CornerRR.Init(RightRear);
+    
+    EEProm.GetLimits(&LeftLowLimit, &LeftHighLimit, &RightLowLimit, &RightHighLimit);
+   
+    CornerLR.Limits(LeftLowLimit, LeftHighLimit);
+    CornerRR.Limits(RightLowLimit, RightHighLimit);
   
 }
 
@@ -64,7 +71,7 @@ void CAirRide::SetState(states_t s)
     
     if(s != laststate)
     {
-        Log(MODULE, "MainState", statestrs  [s]);
+        Log(MODULE, "MainState", statestrs[s]);
         laststate = s;
     }
 }
@@ -88,6 +95,7 @@ bool CAirRide::DumpTank()
     
     if( a < 512 )
     {
+        Log(MODULE, "DumpTank", "Dumping");
         pressed = true;
     }
 }
@@ -113,6 +121,7 @@ bool CAirRide::Calibrate()
             //don't start timer until button is not pressed
             if(!pressed)
             {
+                Log(MODULE, CALSTATE, "NotPressed");
                 pressstart = millis();
                 calstate++;
             }
@@ -122,23 +131,26 @@ bool CAirRide::Calibrate()
             {
                 if(IsTimedOut(5000, pressstart))
                 {
-                    //Button not pressed long enough!
+                    Log(MODULE, CALSTATE, "Pressed");
+                    //Button un pressed long enough!
                     //Now wait another 5 seconds
                     pressstart = millis();
                     calstate++;
                 }
                 else
                 {
+                    Log(MODULE, CALSTATE, "Relased");
                     //button pressed too soon, restart timer
                     calstate = 0;
                 }
             }
-        
+            break;
         case 2:
             if(!pressed)
             {
                 if(IsTimedOut(5000, pressstart))
                 {
+                    Log(MODULE, CALSTATE, "Calibrate");
                     //user completed the magic sequence, calibrate!
                     docal = true;
                     calstate=0;
@@ -390,8 +402,8 @@ void CAirRide::CalLED( bool on)
 
 void CAirRide::Run() 
 {
-    LRheight = 1024 - analogRead(A0);
-    RRheight = 1024 - analogRead(A2);
+    //LRheight = 1024 - analogRead(A0);
+    //RRheight = 1024 - analogRead(A2);
     SetPoint = analogRead(A3);
     Tilt = analogRead(A1)-512;
         
@@ -400,15 +412,15 @@ void CAirRide::Run()
     //increasing value (>512) means raise right side, lower left side
     //decreasing value (<512) means raise left side, Lover right side
     
-    if(IsTimedOut(100, SampleTime))
-    {      
-        Log(MODULE, "LRHeight", LRheight);
-        Log(MODULE, "RRHeight", RRheight);
-        Log(MODULE, "SetPoint", SetPoint);
-        Log(MODULE, "Tilt", Tilt);
+   // if(IsTimedOut(100, SampleTime))
+   // {      
+   //     Log(MODULE, "LRHeight", LRheight);
+   //     Log(MODULE, "RRHeight", RRheight);
+   //     Log(MODULE, "SetPoint", SetPoint);
+   //     Log(MODULE, "Tilt", Tilt);
        
-        SampleTime = millis();
-    }
+    //    SampleTime = millis();
+    //}
 
     CheckEvents();
     
@@ -516,7 +528,6 @@ void CAirRide::Run()
             SetState(CALDONE);
             break;
         case CALDONE:
-
             if(IsTimedOut(1000, CalDoneTime))
             {
                 CalLED(false);

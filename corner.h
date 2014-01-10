@@ -38,6 +38,7 @@ enum Solenoid { Open, Closed };
 
 //enum ValveOp { Filling, Dumping, Holding, LastState };
 #define VALVE_STATES_LIST(macro)\
+    macro(Initing)      \
     macro(Filling)    \
     macro(Dumping)     \
     macro(Holding)      \
@@ -83,6 +84,9 @@ class CCorner
     int PinFillLeftRear;
     int PinFillRightRear;
     int PinSetpoint;
+    
+    int16_t LimitLow;
+    int16_t LimitHigh;
     
     int16_t GetHeight();
     void SetState(ValveOp s);

@@ -33,7 +33,7 @@ CCorner::CCorner()://Position p):
   DeadBand(DEAD_BAND),//ADC counts 0-1024
   HoldDeadBand(HOLD_DEAD_BAND),
   CycleTime(100), //ms between updates
-  State(LastState),
+  State(Initing),
   PinDumpRightRear(10), //set IO pins here
   PinDumpLeftRear(8),
   PinFillRightRear(11),
@@ -41,7 +41,9 @@ CCorner::CCorner()://Position p):
   PinHeightLeftRear(A0),   //analog in
   PinHeightRghtRear(A2),   //analog in
   PinSetpoint(A3),          //analog in setpoint pot
-  HoldOffTime(2000)
+  HoldOffTime(2000),
+  LimitLow(100),            // set limits to 100 from high and low
+  LimitHigh(924)
 {
 
 	LastTime 		= millis();
@@ -69,7 +71,8 @@ void CCorner::Init(Position p)
 }
 void CCorner::Limits(int16_t Low, int16_t high)
 {
-
+    LimitLow = Low +2;
+    LimitHigh = high -2;
 }
 
 //Get the height of this corner
@@ -123,10 +126,10 @@ void CCorner::PrintCorner()
     switch(corner)
    {
         case LeftRear:
-            Serial.print(">Left,");
+            Serial.print("Left,");
             break;
         case RightRear:
-            Serial.print(">Right,");
+            Serial.print("Right,");
             break;
    } 
 }
@@ -137,10 +140,10 @@ void CCorner::SetState(ValveOp s)
     
     static char *StateStrs[] = {VALVE_STATES_LIST(STRINGIFY)};
 
+    Serial.print(">Corner,");
     PrintCorner();
-    Serial.print("state,");
     Serial.print(StateStrs[s]);
-    Serial.print("<");
+    Serial.println("<");
     
     if(laststate != s)
     {
@@ -161,6 +164,17 @@ void CCorner::Run(int16_t tilt)
 	//setpoint + tilt is still limited to +-
 	int32_t setpoint 		= analogRead(PinSetpoint) + tilt;
 	int32_t height 			= GetHeight();
+    
+    //prevent setpoint from exceeding cal limits
+    if(setpoint > LimitHigh)
+    {
+        setpoint = LimitHigh;
+    }
+    
+    if(setpoint < LimitLow) 
+    {
+        setpoint = LimitLow;
+    }
 
 	//sample Slowly
 	if(IsTimedOut(CycleTime, LastTime) )
@@ -176,12 +190,14 @@ void CCorner::Run(int16_t tilt)
         switch(corner)
        {
             case LeftRear:
-                Log("Main", "LRError", height - setpoint);
-                Log("Main", "LeftSet", setpoint);
+                Log("Corner", "LRError", height - setpoint);
+                Log("Corner", "LeftHeight", height);
+                Log("Corner", "LeftSet", setpoint);
                 break;
             case RightRear:
-                Log("Main", "RRError", height - setpoint);
-                Log("Main", "RightSet", setpoint);
+                Log("Corner", "RRError", height - setpoint);
+                Log("Corner", "RightHeight", height);
+                Log("Corner", "RightSet", setpoint);
                 break;
        } 
         
@@ -190,6 +206,11 @@ void CCorner::Run(int16_t tilt)
 
         switch (State)
         {
+            case Initing:
+                Fill(Closed);
+                Dump(Closed);
+                SetState(Holding);
+                break;
             case Holding:
                 //react slowly if already within deadband
                 if( slowheight < (setpoint - HoldDeadBand)) //<500
@@ -246,7 +267,7 @@ void CCorner::Run(int16_t tilt)
                 }
                 break;
             default:
-                Serial.println("Default State!!");
+                Serial.println(">Corner,Default,State!!<");
                 Fill(Closed);
                 Dump(Closed);
                 SetState(Holding);
