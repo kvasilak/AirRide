@@ -166,7 +166,7 @@ void CCorner::Run(int16_t tilt)
 	int32_t height 			= GetHeight();
     
     //prevent setpoint from exceeding cal limits
-    if(setpoint > LimitHigh)
+/*     if(setpoint > LimitHigh)
     {
         setpoint = LimitHigh;
     }
@@ -174,7 +174,7 @@ void CCorner::Run(int16_t tilt)
     if(setpoint < LimitLow) 
     {
         setpoint = LimitLow;
-    }
+    } */
 
 	//sample Slowly
 	if(IsTimedOut(CycleTime, LastTime) )
@@ -187,6 +187,7 @@ void CCorner::Run(int16_t tilt)
         // Scale output for unity gain.
         slowheight = (filter_reg >> FILTER_SHIFT);
 
+        
         switch(corner)
        {
             case LeftRear:

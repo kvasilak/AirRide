@@ -22,7 +22,7 @@
 #include "corner.h"
 #include "debug.h"
 #include "common.h"
-#include "eeprom.h"
+#include "gmceeprom.h"
 #include "airride.h"
 
 
@@ -45,7 +45,7 @@ void CAirRide::Init()
 {
     Serial.println("*******GMC Air Ride Controller V1.0*********");
 
-    //SampleTime = millis();
+    SampleTime = millis();
 
     SetState(RUNMANUAL);
 
@@ -412,15 +412,15 @@ void CAirRide::Run()
     //increasing value (>512) means raise right side, lower left side
     //decreasing value (<512) means raise left side, Lover right side
     
-   // if(IsTimedOut(100, SampleTime))
-   // {      
+    if(IsTimedOut(100, SampleTime))
+    {      
    //     Log(MODULE, "LRHeight", LRheight);
    //     Log(MODULE, "RRHeight", RRheight);
-   //     Log(MODULE, "SetPoint", SetPoint);
-   //     Log(MODULE, "Tilt", Tilt);
+        Log(MODULE, "SetPoint", SetPoint);
+        Log(MODULE, "Tilt", Tilt);
        
-    //    SampleTime = millis();
-    //}
+        SampleTime = millis();
+    }
 
     CheckEvents();
     

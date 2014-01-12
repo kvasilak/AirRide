@@ -24,7 +24,7 @@
 #include "debug.h"
 #include "corner.h"
 #include "common.h"
-#include "eeprom.h"
+#include "gmceeprom.h"
 
 class CAirRide
 {
@@ -57,7 +57,7 @@ class CAirRide
 
     states_t state;// = RUNMANUAL;
 
-    //uint32_t SampleTime;    
+    uint32_t SampleTime;    
     uint32_t CalDoneTime;
 
     //the height valuse that will level the coach to the horizon
