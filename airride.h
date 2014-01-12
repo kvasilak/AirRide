@@ -45,17 +45,17 @@ class CAirRide
     bool AllUp(int left, int right);
     void CalLED(bool on);
     
-    CCorner CornerLR; //LeftRear);
-    CCorner CornerRR; //RightRear);
+    CCorner CornerLR;
+    CCorner CornerRR;
     CEEprom EEProm;
 
-    const int PinTilt;// = 5;
-    const int PinDumpTank;// = A5;
-    const int Mode1;// = 5;
-    const int Mode2;// = 6;
-    const int CalPin;
+    //const int PinTilt;
+    //const int PinDumpTank;
+    //const int Mode1;
+    //const int Mode2;
+    //const int CalPin;
 
-    states_t state;// = RUNMANUAL;
+    states_t state;
 
     uint32_t SampleTime;    
     uint32_t CalDoneTime;

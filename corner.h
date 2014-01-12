@@ -77,13 +77,13 @@ class CCorner
     uint32_t HoldOff;           //The time till the next state change
     uint32_t HoldOffTime;       //Min time between state changes
     
-    int PinHeightLeftRear;
-    int PinHeightRghtRear;
-    int PinDumpRightRear;
-    int PinDumpLeftRear;
-    int PinFillLeftRear;
-    int PinFillRightRear;
-    int PinSetpoint;
+    //int PinHeightLeftRear;
+    //int PinHeightRghtRear;
+    //int PinDumpRightRear;
+    //int PinDumpLeftRear;
+    //int PinFillLeftRear;
+    //int PinFillRightRear;
+    //int PinSetpoint;
     
     int16_t LimitLow;
     int16_t LimitHigh;

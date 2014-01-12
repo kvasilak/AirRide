@@ -34,13 +34,13 @@ CCorner::CCorner()://Position p):
   HoldDeadBand(HOLD_DEAD_BAND),
   CycleTime(100), //ms between updates
   State(Initing),
-  PinDumpRightRear(10), //set IO pins here
-  PinDumpLeftRear(8),
-  PinFillRightRear(11),
-  PinFillLeftRear(7),
-  PinHeightLeftRear(A0),   //analog in
-  PinHeightRghtRear(A2),   //analog in
-  PinSetpoint(A3),          //analog in setpoint pot
+  //PinDumpRightRear(10), //set IO pins here
+  //PinDumpLeftRear(8),
+  //PinFillRightRear(11),
+  //PinFillLeftRear(7),
+  //PinHeightLeftRear(A0),   //analog in
+  //PinHeightRghtRear(A2),   //analog in
+  //PinSetpoint(A3),          //analog in setpoint pot
   HoldOffTime(2000),
   LimitLow(100),            // set limits to 100 from high and low
   LimitHigh(924)
@@ -50,17 +50,17 @@ CCorner::CCorner()://Position p):
     HoldOff         = millis();
 	filter_reg 		= GetHeight() << FILTER_SHIFT;
 
-    pinMode(PinDumpRightRear, OUTPUT);
-    digitalWrite(PinDumpRightRear, HIGH);
+    pinMode(PINDUMP_RIGHTREAR, OUTPUT);
+    digitalWrite(PINDUMP_RIGHTREAR, HIGH);
     
-    pinMode(PinDumpLeftRear, OUTPUT);
-    digitalWrite(PinDumpLeftRear, HIGH);
+    pinMode(PINDUMP_LEFTREAR, OUTPUT);
+    digitalWrite(PINDUMP_LEFTREAR, HIGH);
     
-    pinMode(PinFillRightRear, OUTPUT);
-    digitalWrite(PinFillRightRear, HIGH);
+    pinMode(PINFILL_RIGHTREAR, OUTPUT);
+    digitalWrite(PINFILL_RIGHTREAR, HIGH);
     
-    pinMode(PinFillLeftRear, OUTPUT);
-    digitalWrite(PinFillLeftRear, HIGH);
+    pinMode(PINFILL_LEFTREAR, OUTPUT);
+    digitalWrite(PINFILL_LEFTREAR, HIGH);
     
     //analog in pins need no setup
 }
@@ -83,10 +83,10 @@ int16_t CCorner::GetHeight()
     switch(corner)
    {
         case LeftRear:
-            height = 1024 - analogRead(PinHeightLeftRear); 
+            height = 1024 - analogRead(PINLRHEIGHT); 
             break;
         case RightRear:
-            height = 1024 - analogRead(PinHeightRghtRear);
+            height = 1024 - analogRead(PINRRHEIGHT);
             break;
    }   
    
@@ -99,10 +99,10 @@ void CCorner::Fill(Solenoid state)
     switch(corner)
    {
         case LeftRear:
-            digitalWrite(PinFillLeftRear, state);
+            digitalWrite(PINFILL_LEFTREAR, state);
             break;
         case RightRear:
-            digitalWrite(PinFillRightRear, state);
+            digitalWrite(PINFILL_RIGHTREAR, state);
             break;
    }   
 }
@@ -113,10 +113,10 @@ void CCorner::Dump(Solenoid state)
     switch(corner)
    {
         case LeftRear:
-            digitalWrite(PinDumpLeftRear, state);
+            digitalWrite(PINDUMP_LEFTREAR, state);
             break;
         case RightRear:
-            digitalWrite(PinDumpRightRear, state);
+            digitalWrite(PINDUMP_RIGHTREAR, state);
             break;
    }   
 }
@@ -162,7 +162,7 @@ void CCorner::Run(int16_t tilt)
 	//the tilt pot causes one corner to raise while the other lowers
 	//This is used to level the motorhome while camping
 	//setpoint + tilt is still limited to +-
-	int32_t setpoint 		= analogRead(PinSetpoint) + tilt;
+	int32_t setpoint 		= analogRead(PINSETPOINT) + tilt;
 	int32_t height 			= GetHeight();
     
     //prevent setpoint from exceeding cal limits

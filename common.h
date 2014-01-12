@@ -49,5 +49,28 @@ enum states_t
 };
 
 bool IsTimedOut(uint32_t period, uint32_t start);
+  
+//IO map
+#define PINLRHEIGHT A0
+#define PINTILT     A1
+#define PINRRHEIGHT A2
+#define PINSETPOINT A3
+//#define  A4
+#define PINDUMP A5
+//#define  A6
+//#define  A7
+
+//#define  2
+//#define  3
+#define PINCAL 4
+#define PINMODE1 5
+#define PINMODE2 6
+#define PINFILL_LEFTREAR  7
+#define PINDUMP_LEFTREAR  8
+//#define   9
+#define PINDUMP_RIGHTREAR 10
+#define PINFILL_RIGHTREAR 11
+//#define  12
+//#define  13
 
 #endif

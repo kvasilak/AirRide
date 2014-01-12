@@ -31,12 +31,12 @@
 static char MODULE[] = {"AirRide"};
 static char CALSTATE[] = {"CalState"};
 
-CAirRide::CAirRide() :
-PinTilt(5),
-PinDumpTank(A5),
-Mode1(5),
-Mode2(6),
-CalPin(7)
+CAirRide::CAirRide()//:
+//PinTilt(1),
+//PinDumpTank(A5),
+//Mode1(5),
+//Mode2(6),
+//CalPin(7)
 {
 
 }
@@ -49,10 +49,9 @@ void CAirRide::Init()
 
     SetState(RUNMANUAL);
 
-    pinMode(2, INPUT_PULLUP);
-    pinMode(Mode1, INPUT_PULLUP);
-    pinMode(Mode2, INPUT_PULLUP);
-    pinMode(CalPin, INPUT_PULLUP);
+    pinMode(PINMODE1, INPUT_PULLUP);
+    pinMode(PINMODE2, INPUT_PULLUP);
+    pinMode(PINCAL, INPUT_PULLUP);
   
     CornerLR.Init(LeftRear); 
     CornerRR.Init(RightRear);
@@ -90,7 +89,7 @@ void CAirRide::CaclulateLevel()
 //if at zero (<512) button is pressed
 bool CAirRide::DumpTank()
 {
-    int a = analogRead(A4);
+    int a = analogRead(PINDUMP);
     bool pressed = false;
     
     if( a < 512 )
@@ -112,7 +111,7 @@ bool CAirRide::Calibrate()
     bool docal = false;
     static uint32_t pressstart;
     
-    bool pressed = (LOW == digitalRead(CalPin));
+    bool pressed = (LOW == digitalRead(PINCAL));
 
     
     switch(calstate)
@@ -169,9 +168,9 @@ bool CAirRide::Calibrate()
 
 void CAirRide::GetMode()
 {
-    int m = digitalRead(Mode1);
+    int m = digitalRead(PINMODE1);
     
-    m &= digitalRead(Mode2) << 2;
+    m &= digitalRead(PINMODE2) << 2;
     
     mode = (states_t)m;
     
@@ -389,13 +388,13 @@ void CAirRide::CalLED( bool on)
     if(on)
     {
         //make output and turn on LED
-        pinMode(CalPin, OUTPUT);
-        digitalWrite(CalPin, HIGH);
+        pinMode(PINCAL, OUTPUT);
+        digitalWrite(PINCAL, HIGH);
     }
     else
     {
-        digitalWrite(CalPin, LOW);
-        pinMode(CalPin, INPUT_PULLUP);
+        digitalWrite(PINCAL, LOW);
+        pinMode(PINCAL, INPUT_PULLUP);
         
     }
 }
@@ -404,8 +403,8 @@ void CAirRide::Run()
 {
     //LRheight = 1024 - analogRead(A0);
     //RRheight = 1024 - analogRead(A2);
-    SetPoint = analogRead(A3);
-    Tilt = analogRead(A1)-512;
+    SetPoint = analogRead(PINSETPOINT);
+    Tilt = analogRead(PINTILT)-512;
         
     //read the tilt setpoint and adjust heights as needed
     //center of pot means no tilt
