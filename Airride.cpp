@@ -114,8 +114,10 @@ bool CAirRide::Calibrate()
     bool docal = false;
     static uint32_t pressstart;
     
-    bool pressed = (LOW == digitalRead(PINCAL));
-
+    //N.O. switch
+    bool pressed = (HIGH == digitalRead(PINCAL));
+   
+   Log(MODULE, "CalButton", digitalRead(PINCAL));
     
     switch(calstate)
     {
@@ -131,6 +133,7 @@ bool CAirRide::Calibrate()
         case 1: 
             if(pressed)
             {
+                //don't press button for 5 seconds
                 if(IsTimedOut(5000, pressstart))
                 {
                     Log(MODULE, CALSTATE, "Pressed");
@@ -139,10 +142,11 @@ bool CAirRide::Calibrate()
                     pressstart = millis();
                     calstate++;
                 }
-                else
+                else //button pressed too soon, restart timer
                 {
                     Log(MODULE, CALSTATE, "Released");
-                    //button pressed too soon, restart timer
+                    
+                    pressstart = millis();
                     calstate = 0;
                 }
             }
@@ -150,6 +154,7 @@ bool CAirRide::Calibrate()
         case 2:
             if(!pressed)
             {
+                //Hold button down for 5 seconds
                 if(IsTimedOut(5000, pressstart))
                 {
                     Log(MODULE, CALSTATE, "Calibrate");
@@ -405,13 +410,13 @@ void CAirRide::CalLED( bool on)
     if(on)
     {
         //make output and turn on LED
-        pinMode(PINCAL, OUTPUT);
-        digitalWrite(PINCAL, HIGH);
+   //     pinMode(PINCAL, OUTPUT);
+   //     digitalWrite(PINCAL, HIGH);
     }
     else
     {
-        digitalWrite(PINCAL, LOW);
-        pinMode(PINCAL, INPUT_PULLUP);
+   //     digitalWrite(PINCAL, LOW);
+   //     pinMode(PINCAL, INPUT_PULLUP);
         
     }
 }
