@@ -75,7 +75,7 @@ class CAirRide
     int16_t LeftAuto;
     int16_t RightAuto;
     
-    states_t mode;// = MANUALMODE;
+    modes_t mode;// = MANUALMODE;
 
     int16_t LeftLowLimit;
     int16_t LeftHighLimit;

@@ -31,14 +31,8 @@
 static char MODULE[] = {"AirRide"};
 static char CALSTATE[] = {"CalState"};
 
-CAirRide::CAirRide()//:
-//PinTilt(1),
-//PinDumpTank(A5),
-//Mode1(5),
-//Mode2(6),
-//CalPin(7)
+CAirRide::CAirRide()
 {
-
 }
 
 void CAirRide::Init()
@@ -73,6 +67,7 @@ void CAirRide::SetState(states_t s)
         Log(MODULE, "MainState", statestrs[s]);
         laststate = s;
     }
+    state = s;
 }
 
 //calculate the Left and right height values that will make the coach level
@@ -91,12 +86,20 @@ bool CAirRide::DumpTank()
 {
     int a = analogRead(PINDUMP);
     bool pressed = false;
+    //Log(MODULE, "DumpTank", a);
     
     if( a < 512 )
+    {
+        Log(MODULE, "DumpTank", "UnDumping");
+        
+    }
+    else
     {
         Log(MODULE, "DumpTank", "Dumping");
         pressed = true;
     }
+    
+    return pressed;
 }
 
 //only called when appropriate
@@ -138,7 +141,7 @@ bool CAirRide::Calibrate()
                 }
                 else
                 {
-                    Log(MODULE, CALSTATE, "Relased");
+                    Log(MODULE, CALSTATE, "Released");
                     //button pressed too soon, restart timer
                     calstate = 0;
                 }
@@ -166,15 +169,23 @@ bool CAirRide::Calibrate()
     return docal;
 }
 
+// mode 1   mode 2  state
+//   0        0       Manual
+//   1        0       Travel
+//   0        1       Autolevel
+//   1        1       Autolevel calibrate
 void CAirRide::GetMode()
 {
     int m = digitalRead(PINMODE1);
+    static char *states[] = {MODES_LIST(STRINGIFY)};
     
-    m &= digitalRead(PINMODE2) << 2;
+    m |= digitalRead(PINMODE2) << 1;
     
-    mode = (states_t)m;
+    Log(MODULE, "Mode", states[mode]);
     
-    Log(MODULE, "Mode", mode);
+    mode = (modes_t)m;
+    
+    
 }
 
 //read all the inputs and change states accordingly
@@ -191,7 +202,7 @@ void CAirRide::CheckEvents()
                 case MANUALMODE:
                 case AUTOMODE:
                 case AUTOCALMODE:
-                SetState(mode);
+                SetState((states_t)mode);
                 break;
                 //No mode change
                 case TRAVELMODE:
@@ -200,6 +211,7 @@ void CAirRide::CheckEvents()
                 {
                     SetState(CALLIMITS);
                 }
+                
                 //what are the chances of dumptank and calibrate being pressed at the exact same time?
                 if(DumpTank())
                 {
@@ -211,10 +223,14 @@ void CAirRide::CheckEvents()
         case RUNMANUAL:
             switch(mode)
             {
+            //Log(MODULE, "DumpTank", "Check!!");
+            
                 case TRAVELMODE:
                 case AUTOMODE:
                 case AUTOCALMODE:
-                SetState(mode);
+                
+                //Log(MODULE, "DumpTank", "Check%");
+                SetState((states_t)mode);
                 break;
                 case MANUALMODE:
                 //save the current height as the travel height
@@ -225,6 +241,7 @@ void CAirRide::CheckEvents()
                     SetState(CALDONELED);
                 }
                 
+                //Log(MODULE, "DumpTank", "Check");
                 if(DumpTank())
                 {
                     SetState(DUMPTANK);
@@ -238,7 +255,7 @@ void CAirRide::CheckEvents()
                 case TRAVELMODE:
                 case MANUALMODE:
                 case AUTOCALMODE:
-                SetState(mode);
+                SetState((states_t)mode);
                 break;
                 case AUTOMODE:
                 if(DumpTank())
@@ -254,7 +271,7 @@ void CAirRide::CheckEvents()
                 case TRAVELMODE:
                 case MANUALMODE:
                 case AUTOMODE:
-                SetState(mode);
+                SetState((states_t)mode);
                 break;
                 case AUTOCALMODE:
                 //Save the accelerometer values for level
@@ -291,7 +308,7 @@ void CAirRide::CheckEvents()
                 case MANUALMODE:
                 case AUTOMODE:
                 case AUTOCALMODE:
-                SetState(mode);
+                SetState((states_t)mode);
                 break;
             }
         break;
@@ -434,16 +451,16 @@ void CAirRide::Run()
         //Run at the calibrated travel height
         //todo change update frequency 
         case RUNTRAVEL:
-            CornerLR.Run(EEProm.GetLeftTravel());  
-            CornerRR.Run(EEProm.GetRightTravel());  
+            CornerLR.Run(0);  
+            CornerRR.Run(0);  
             break;
             
         //Auto level to the horizon
         case RUNAUTO:
             //read accel
             CaclulateLevel();
-            CornerLR.Run(LeftLevel);  
-            CornerRR.Run(RightLevel);
+            CornerLR.Run(0);  
+            CornerRR.Run(0);
             break;
             
         //manually level the coach to the horizon

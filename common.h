@@ -24,14 +24,10 @@
 #include "debug.h"
 
 #define STATES_LIST(macro)\
-    macro(RUNMANUAL)                \
-    macro(MANUALMODE = RUNMANUAL)   \
-    macro(RUNTRAVEL)                \
-    macro(TRAVELMODE = RUNTRAVEL)   \
-    macro(RUNAUTO)                  \
-    macro(AUTOMODE = RUNAUTO)       \
     macro(RUNAUTOCAL)               \
-    macro(AUTOCALMODE = RUNAUTOCAL) \
+    macro(RUNTRAVEL)                \
+    macro(RUNAUTO)                  \
+    macro(RUNMANUAL)                \
     macro(DUMPTANK)                 \
     macro(DUMPINGTANK)              \
     macro(CALLIMITS)                \
@@ -46,6 +42,18 @@
 enum states_t
 {
   STATES_LIST(ENUMIFY)
+};
+
+#define MODES_LIST(macro)\
+    macro(AUTOCALMODE)  \
+    macro(TRAVELMODE)   \
+    macro(AUTOMODE)     \
+    macro(MANUALMODE)   \
+
+    
+enum modes_t
+{
+  MODES_LIST(ENUMIFY)
 };
 
 bool IsTimedOut(uint32_t period, uint32_t start);
