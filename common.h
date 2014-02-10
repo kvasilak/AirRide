@@ -32,6 +32,7 @@
     macro(DUMPINGTANK)              \
     macro(CALLIMITS)                \
     macro(CALLOW)                   \
+    macro(CALWAITHIGH)              \
     macro(CALHIGH)                  \
     macro(CALSAVELIMITS)            \
     macro(CALDONELED)               \

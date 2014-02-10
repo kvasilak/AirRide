@@ -41,8 +41,9 @@ class CAirRide
     bool Calibrate();
     void GetMode();
     void CheckEvents();
-    bool AllDown(int left, int right);
-    bool AllUp(int left, int right);
+    bool AllDown(int *oldleft, int *oldright, int left, int right);
+    bool AllUp(int *oldleft, int *oldright, int left, int right);
+    bool IsRising(int *OldLeft, int *Oldright, int LRheight, int RRheight);
     void CalLED(bool on);
     
     CCorner CornerLR;
@@ -81,7 +82,13 @@ class CAirRide
     int16_t LeftHighLimit;
     int16_t RightLowLimit;
     int16_t RightHighLimit;
-
+    
+   //timeouts for all up and all down
+    uint32_t timeout;
+    uint32_t LeftMinTime;
+    uint32_t RightMinTime;
+    int OldLeft;
+    int OldRight;
 };
 
 #endif

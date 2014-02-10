@@ -301,6 +301,7 @@ void CAirRide::CheckEvents()
         //no change allowed during limit calibration
         case CALLIMITS: 
         case CALLOW:
+        case CALWAITHIGH:   
         case CALHIGH:
         case CALDONELED:
         case CALDONE:
@@ -325,53 +326,112 @@ void CAirRide::CheckEvents()
 //wait for both heights to be all the way down
 //determined by the height changing less that 2 counts in 1 second
 //Waits 10 seconds for the cases where it is slow to start or stop moving
-bool CAirRide::AllDown(int left, int right)
+bool CAirRide::AllDown(int *oldleft, int *oldright, int left, int right)
 {
-    static int oldleft = left;
-    static int oldright = right;
-    static uint32_t timeout = millis();
-    static uint32_t mintime = millis();
-     
     bool leftdown = false;
     bool rightdown = false;
     bool alldown = false;
     
+    //sample height change once a second
     if(IsTimedOut(1000, timeout))
     {
         //less than 2 counts in 1 second means we're all the way down
-        if(oldleft - left < 2)
+        if(*oldleft - left <= 2)
         {
-            leftdown = true;
+            //no change for 10 seconds
+            if(IsTimedOut(10000, LeftMinTime))
+            {
+                leftdown = true;
+            }
+        }
+        else
+        {
+            LeftMinTime = millis();
         }
         
-        if(oldright - right < 2)
+        if(*oldright - right <= 2)
         {
-            rightdown = true;
+            if(IsTimedOut(10000, RightMinTime))
+            {
+                rightdown = true;
+            }
         }
-        
-        //both heights stopped moving and we have waited at least 10 seconds
-        if((leftdown && rightdown)&& IsTimedOut(10000, mintime))
+        else
         {
-            alldown = true;
-            LeftLowLimit = left;
-            RightLowLimit = right;
+            RightMinTime = millis();
         }
-        
+
+        //reset timer for another second
         timeout = millis();
-        oldleft = left;
-        oldright = right;
+        
+        //don't update once we stop moving
+        if(!leftdown)
+        {
+            *oldleft = left;
+        }
+        
+        if(!rightdown)
+        {
+            *oldright = right;
+        }
     }
+
+    if(leftdown && rightdown)
+    {
+        //both heights stopped moving for at least 10 seconds
+        alldown = true;
+        LeftLowLimit = left;
+        RightLowLimit = right;
+    }
+
     return alldown;
 }
 
-//see all down comments
-bool CAirRide::AllUp(int left, int right)
+
+//Wait for the car to start rising
+bool CAirRide::IsRising(int *oldleft, int *oldright, int left, int right)
 {
-    static int oldleft = left;
-    static int oldright = right;
-    static uint32_t timeout = millis();
-    static uint32_t mintime = millis();
+    bool leftmoved = false; 
+    bool rightmoved = false;
+    bool allmoved = false;
     
+    if(IsTimedOut(1000, timeout))
+    {
+        //wait for car to go up 10 counts
+        if(*oldleft - left > 10)
+        {
+            leftmoved = true;
+        }
+        
+        if(*oldright - right > 10)
+        {
+            rightmoved = true;
+        }
+        
+        //don't update once we start moving
+        if(!leftmoved)
+        {
+            *oldleft = left;
+        }
+        
+        if(!rightmoved)
+        {
+            *oldright = right;
+        }
+    }
+    
+    if(leftmoved && rightmoved)
+    {
+        //both heights stopped moving for at least 10 seconds
+        allmoved = true;
+    }
+
+    return allmoved;
+}
+
+//see all down comments
+bool CAirRide::AllUp(int *oldleft, int *oldright, int left, int right)
+{ 
     bool leftup = false;
     bool rightup = false;
     bool allup = false;
@@ -379,28 +439,52 @@ bool CAirRide::AllUp(int left, int right)
     if(IsTimedOut(1000, timeout))
     {
         //less than 2 counts in 1 second means we're all the way down
-        if(left - oldleft < 2)
+        if(*oldleft - left < 2)
         {
-            leftup = true;
+            //no change for 10 seconds
+            if(IsTimedOut(10000, LeftMinTime))
+            {
+                leftup = true;
+            } 
         }
         
-        if(right - oldright < 2)
+        if(*oldright - right < 2)
         {
-            rightup = true;
+            //no change for 10 seconds
+            if(IsTimedOut(10000, RightMinTime))
+            {
+                rightup = true;
+            } 
         }
         
         //both heights stopped moving and we have waited at least 10 seconds
-        if((leftup && rightup) && IsTimedOut(10000, mintime))
+        if(leftup && rightup)
         {
             allup = true;
-            LeftHighLimit = left;
-            RightHighLimit = right;
         }
         
         timeout = millis();
-        oldleft = left;
-        oldright = right;
+        
+        if(!leftup)
+        {
+            *oldleft = left;
+        }
+        
+        if(!rightup)
+        {
+            *oldright = right;
+        }
     }
+    
+    if(leftup && rightup)
+    {
+        //both heights stopped moving for at least 10 seconds
+        allup = true;
+        LeftHighLimit = left;
+        RightHighLimit = right;
+    }
+    
+    
     return allup;
 }
 
@@ -512,22 +596,46 @@ void CAirRide::Run()
             
             CornerLR.Dump(Open);
             CornerLR.Dump(Open);
+            
+            timeout = millis();
+            LeftMinTime = millis();
+            RightMinTime = millis();
+            OldLeft = LRheight;
+            OldRight = RRheight;
+    
             SetState(CALLOW);
             break;
         case CALLOW:
-            //wait for height to stop changing
-            if(AllDown(LRheight, RRheight))
+            //wait for car to be all the way down
+            if(AllDown(&OldLeft, &OldRight, LRheight, RRheight))
             {
                 CornerLR.Dump(Closed);
                 CornerLR.Dump(Closed);
                 CornerLR.Fill(Open);     
                 CornerRR.Fill(Open);
                 
+                timeout = millis();
+                LeftMinTime = millis();
+                RightMinTime = millis();
+                OldLeft = LRheight;
+                OldRight = RRheight;
+                SetState(CALWAITHIGH);
+            }
+            break;
+        case CALWAITHIGH:
+            //wait for the car to start rising
+            if(IsRising(&OldLeft, &OldRight, LRheight, RRheight))
+            {
+                timeout = millis();
+                LeftMinTime = millis();
+                RightMinTime = millis();
+                OldLeft = LRheight;
+                OldRight = RRheight;
                 SetState(CALHIGH);
             }
             break;
         case CALHIGH:
-            if(AllUp(LRheight, RRheight))
+            if(AllUp(&OldLeft, &OldRight, LRheight, RRheight))
             {
                 CornerLR.Fill(Closed);     
                 CornerRR.Fill(Closed);
