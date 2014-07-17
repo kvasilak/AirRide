@@ -107,7 +107,7 @@ bool CAirRide::DumpTank()
 //not pressed for at least 5 seconds
 //pressed for 5 seconds
 //released
-//once released were in calibrate mode
+//once released we're in calibrate mode
 bool CAirRide::Calibrate()
 {
     static int calstate = 0;
@@ -181,15 +181,27 @@ bool CAirRide::Calibrate()
 //   1        1       Autolevel calibrate
 void CAirRide::GetMode()
 {
-    int m = digitalRead(PINMODE1);
+    static modes_t LastMode = AUTOMODE;//should always be different the first test
     static char *states[] = {MODES_LIST(STRINGIFY)};
+    //modes_t themode=AUTOMODE;
     
-    m |= digitalRead(PINMODE2) << 1;
-    
-    Log(MODULE, "Mode", states[mode]);
-    
-    mode = (modes_t)m;
-    
+    //input truth table
+    //Logic is inverted
+    //11 Auto mode
+    //10 Travel mode
+    //01 Manual mode
+    //00 Auto Calibrate
+    int m = digitalRead(PINMODE1);
+    m |= digitalRead(PINMODE2) <<1;
+  
+    if(LastMode != m)
+    {        
+        mode = (modes_t)m;
+        
+        Log(MODULE, "Mode", states[m]);
+        
+        LastMode = (modes_t)m;
+    }
     
 }
 
@@ -218,10 +230,10 @@ void CAirRide::CheckEvents()
                 }
                 
                 //what are the chances of dumptank and calibrate being pressed at the exact same time?
-                if(DumpTank())
-                {
-                    SetState(DUMPTANK);
-                }
+                //if(DumpTank())
+                //{
+                //    SetState(DUMPTANK);
+                //}
                 break;
             }
             break;
@@ -247,10 +259,10 @@ void CAirRide::CheckEvents()
                 }
                 
                 //Log(MODULE, "DumpTank", "Check");
-                if(DumpTank())
-                {
-                    SetState(DUMPTANK);
-                }
+                //if(DumpTank())
+                //{
+                //    SetState(DUMPTANK);
+                //}
                 break;
             }
             break;
@@ -263,10 +275,10 @@ void CAirRide::CheckEvents()
                 SetState((states_t)mode);
                 break;
                 case AUTOMODE:
-                if(DumpTank())
-                {
-                    SetState(DUMPTANK);
-                }
+                //if(DumpTank())
+                //{
+                //    SetState(DUMPTANK);
+                //}
                 break;
             }
             break;
@@ -288,10 +300,10 @@ void CAirRide::CheckEvents()
                     SetState(CALDONELED);
                 }
                 
-                if(DumpTank())
-                {
-                    SetState(DUMPTANK);
-                }
+                //if(DumpTank())
+                //{
+                //    SetState(DUMPTANK);
+                //}
                 break;
             }
             break;
@@ -519,8 +531,6 @@ void CAirRide::Run()
     
     if(IsTimedOut(100, SampleTime))
     {      
-   //     Log(MODULE, "LRHeight", LRheight);
-   //     Log(MODULE, "RRHeight", RRheight);
         Log(MODULE, "SetPoint", SetPoint);
         Log(MODULE, "Tilt", Tilt);
        
@@ -649,7 +659,7 @@ void CAirRide::Run()
             CornerLR.Limits(LeftLowLimit, LeftHighLimit);
             CornerRR.Limits(RightLowLimit, RightHighLimit);
             
-            SetState(CALDONE);
+            SetState(CALDONELED);
             break;
          //done with cal, show cal LED for 1 sec 
         case CALDONELED:

@@ -17,6 +17,11 @@
 ** http://www.gnu.org/licenses/.
 **
 **    Corner.h
+
+todo
+there is a lagtime from opening/closing the valve to a height change.
+need to predict movement or use shorter bursts to sneak up on height
+
 **************************************************************************/
 
 #ifndef INCLUDE_CORNER_H
@@ -34,7 +39,9 @@ enum Position {
   
 enum LEDS { OK_LED, Error_LED, IN_Position_LED };
 
-enum Solenoid { Open, Closed };
+//energised is open
+//so 1 is open, 0 closed
+enum Solenoid { Closed, Open }; 
 
 //enum ValveOp { Filling, Dumping, Holding, LastState };
 #define VALVE_STATES_LIST(macro)\
@@ -52,8 +59,8 @@ enum ValveOp
 // Parameter K for the filter
 #define FILTER_SHIFT    5//8
 #define HEIGHT_NOMINAL  512
-#define DEAD_BAND       5
-#define HOLD_DEAD_BAND  8
+#define DEAD_BAND       10 //5
+#define HOLD_DEAD_BAND  20 //8
 
 class CCorner 
 {

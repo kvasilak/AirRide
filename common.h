@@ -26,8 +26,8 @@
 #define STATES_LIST(macro)\
     macro(RUNAUTOCAL)               \
     macro(RUNTRAVEL)                \
-    macro(RUNAUTO)                  \
-    macro(RUNMANUAL)                \
+    macro(RUNMANUAL)                  \
+    macro(RUNAUTO)                \
     macro(DUMPTANK)                 \
     macro(DUMPINGTANK)              \
     macro(CALLIMITS)                \
@@ -45,11 +45,13 @@ enum states_t
   STATES_LIST(ENUMIFY)
 };
 
+//inverted logic on these pins
+//0 is ON!
 #define MODES_LIST(macro)\
     macro(AUTOCALMODE)  \
     macro(TRAVELMODE)   \
-    macro(AUTOMODE)     \
-    macro(MANUALMODE)   \
+    macro(MANUALMODE)     \
+    macro(AUTOMODE)   \
 
     
 enum modes_t
@@ -60,26 +62,27 @@ enum modes_t
 bool IsTimedOut(uint32_t period, uint32_t start);
   
 //IO map
-#define PINLRHEIGHT A0
-#define PINTILT     A1
+//=== Analog ===================
+#define PINSETPOINT A0
+//#define PINTILT     A1 //this input is bad
 #define PINRRHEIGHT A2
-#define PINSETPOINT A3
-//#define  A4
-#define PINDUMP A5
-//#define  A6
+#define PINLRHEIGHT A3
+#define PINDUMP     A4
+#define WIPERSPEED  A5
+#define PINTILT  A6
 //#define  A7
 
-//#define  2
-//#define  3
-#define PINCAL 4
-#define PINMODE1 5
-#define PINMODE2 6
-#define PINFILL_LEFTREAR  7
-#define PINDUMP_LEFTREAR  8
-//#define   9
-#define PINDUMP_RIGHTREAR 10
-#define PINFILL_RIGHTREAR 11
-//#define  12
-//#define  13
+// === Digital =======================
+#define SERVO               2
+#define LED                 3       //LED and cal share a pin
+#define PINCAL              3
+#define PINMODE1            6
+#define PINMODE2            7
+#define PINFILL_LEFTREAR    8
+#define PINDUMP_LEFTREAR    9
+#define PINDUMP_RIGHTREAR   10
+#define PINFILL_RIGHTREAR   11
+#define ACCEL_I2C_DATA      12
+#define ACCEL_I2C_CLOCK     13
 
 #endif
