@@ -53,11 +53,9 @@
             "9600",
             "14400",
             "19200",
-            "28800",
-            "56000",
-            "115200",
-            "128000",
-            "256000"});
+            "38400",
+            "57600",
+            "115200"});
             this.cboBaud.Location = new System.Drawing.Point(164, 22);
             this.cboBaud.Name = "cboBaud";
             this.cboBaud.Size = new System.Drawing.Size(121, 21);

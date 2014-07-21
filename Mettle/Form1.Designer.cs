@@ -28,11 +28,11 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend2 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series4 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series5 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series6 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             this.tabMain = new System.Windows.Forms.TabControl();
             this.tabChart = new System.Windows.Forms.TabPage();
@@ -404,10 +404,10 @@
             this.tagState11.Name = "tagState11";
             this.tagState11.Size = new System.Drawing.Size(103, 23);
             this.tagState11.Sort = "Mode";
-            this.tagState11.State = "AUTOMODE";
+            this.tagState11.State = "CAMPMODE";
             this.tagState11.TabIndex = 51;
             this.tagState11.Tag = "";
-            this.tagState11.Text = "AUTOMODE";
+            this.tagState11.Text = "CAMPMODE";
             // 
             // tagState10
             // 
@@ -1020,10 +1020,10 @@
             this.tagState3.Name = "tagState3";
             this.tagState3.Size = new System.Drawing.Size(103, 23);
             this.tagState3.Sort = "MainState";
-            this.tagState3.State = "RUNAUTO";
+            this.tagState3.State = "RUNCAMP";
             this.tagState3.TabIndex = 28;
             this.tagState3.Tag = "";
-            this.tagState3.Text = "RUNAUTO";
+            this.tagState3.Text = "RUNCAMP";
             // 
             // tagState2
             // 
@@ -1057,37 +1057,37 @@
             this.tagChart1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            chartArea1.AxisX.Maximum = 500D;
-            chartArea1.AxisX.Minimum = 0D;
-            chartArea1.AxisY.Interval = 64D;
-            chartArea1.AxisY.MajorGrid.Interval = 64D;
-            chartArea1.AxisY.MajorGrid.IntervalOffset = 0D;
-            chartArea1.AxisY.MajorTickMark.Enabled = false;
-            chartArea1.AxisY.Maximum = 256D;
-            chartArea1.AxisY.Minimum = -256D;
-            chartArea1.Name = "ChartArea1";
-            this.tagChart1.ChartAreas.Add(chartArea1);
-            legend1.Enabled = false;
-            legend1.Name = "Legend1";
-            this.tagChart1.Legends.Add(legend1);
+            chartArea2.AxisX.Maximum = 500D;
+            chartArea2.AxisX.Minimum = 0D;
+            chartArea2.AxisY.Interval = 10D;
+            chartArea2.AxisY.MajorGrid.Interval = 10D;
+            chartArea2.AxisY.MajorGrid.IntervalOffset = 0D;
+            chartArea2.AxisY.MajorTickMark.Enabled = false;
+            chartArea2.AxisY.Maximum = 50D;
+            chartArea2.AxisY.Minimum = -50D;
+            chartArea2.Name = "ChartArea1";
+            this.tagChart1.ChartAreas.Add(chartArea2);
+            legend2.Enabled = false;
+            legend2.Name = "Legend1";
+            this.tagChart1.Legends.Add(legend2);
             this.tagChart1.Location = new System.Drawing.Point(3, 372);
             this.tagChart1.Module = "Corner";
             this.tagChart1.Name = "tagChart1";
-            series1.ChartArea = "ChartArea1";
-            series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
-            series1.Legend = "Legend1";
-            series1.Name = "LRError";
-            series2.ChartArea = "ChartArea1";
-            series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
-            series2.Legend = "Legend1";
-            series2.Name = "RRError";
-            series3.ChartArea = "ChartArea1";
-            series3.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
-            series3.Legend = "Legend1";
-            series3.Name = "ZAxis";
-            this.tagChart1.Series.Add(series1);
-            this.tagChart1.Series.Add(series2);
-            this.tagChart1.Series.Add(series3);
+            series4.ChartArea = "ChartArea1";
+            series4.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
+            series4.Legend = "Legend1";
+            series4.Name = "LRError";
+            series5.ChartArea = "ChartArea1";
+            series5.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
+            series5.Legend = "Legend1";
+            series5.Name = "RRError";
+            series6.ChartArea = "ChartArea1";
+            series6.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
+            series6.Legend = "Legend1";
+            series6.Name = "ZAxis";
+            this.tagChart1.Series.Add(series4);
+            this.tagChart1.Series.Add(series5);
+            this.tagChart1.Series.Add(series6);
             this.tagChart1.Size = new System.Drawing.Size(1152, 141);
             this.tagChart1.TabIndex = 16;
             this.tagChart1.Text = "tagChart1";

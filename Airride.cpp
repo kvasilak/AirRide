@@ -47,13 +47,19 @@ void CAirRide::Init()
     pinMode(PINMODE2, INPUT_PULLUP);
     pinMode(PINCAL, INPUT_PULLUP);
   
-    CornerLR.Init(LeftRear); 
-    CornerRR.Init(RightRear);
+    CornerL.Init(LeftRear); 
+    CornerR.Init(RightRear);
     
     EEProm.GetLimits(&LeftLowLimit, &LeftHighLimit, &RightLowLimit, &RightHighLimit);
+    
+    //TODO read from EEPROM also
+    LTravelHeight = 586;
+    RTravelHeight = 434;
    
-    CornerLR.Limits(LeftLowLimit, LeftHighLimit);
-    CornerRR.Limits(RightLowLimit, RightHighLimit);
+    CornerL.Limits(LeftLowLimit, LeftHighLimit);
+    CornerR.Limits(RightLowLimit, RightHighLimit);
+    
+    CheckEvents();
   
 }
 
@@ -181,9 +187,9 @@ bool CAirRide::Calibrate()
 //   1        1       Autolevel calibrate
 void CAirRide::GetMode()
 {
-    static modes_t LastMode = AUTOMODE;//should always be different the first test
+    static modes_t LastMode = CAMPMODE;//should always be different the first test
     static char *states[] = {MODES_LIST(STRINGIFY)};
-    //modes_t themode=AUTOMODE;
+    //modes_t themode=CAMPMODE;
     
     //input truth table
     //Logic is inverted
@@ -217,7 +223,7 @@ void CAirRide::CheckEvents()
             switch(mode)
             {
                 case MANUALMODE:
-                case AUTOMODE:
+                case CAMPMODE:
                 case AUTOCALMODE:
                 SetState((states_t)mode);
                 break;
@@ -243,7 +249,7 @@ void CAirRide::CheckEvents()
             //Log(MODULE, "DumpTank", "Check!!");
             
                 case TRAVELMODE:
-                case AUTOMODE:
+                case CAMPMODE:
                 case AUTOCALMODE:
                 
                 //Log(MODULE, "DumpTank", "Check%");
@@ -266,7 +272,7 @@ void CAirRide::CheckEvents()
                 break;
             }
             break;
-        case RUNAUTO:
+        case RUNCAMP:
             switch(mode)//no calibration to do
             {
                 case TRAVELMODE:
@@ -274,7 +280,7 @@ void CAirRide::CheckEvents()
                 case AUTOCALMODE:
                 SetState((states_t)mode);
                 break;
-                case AUTOMODE:
+                case CAMPMODE:
                 //if(DumpTank())
                 //{
                 //    SetState(DUMPTANK);
@@ -287,7 +293,7 @@ void CAirRide::CheckEvents()
             {
                 case TRAVELMODE:
                 case MANUALMODE:
-                case AUTOMODE:
+                case CAMPMODE:
                 SetState((states_t)mode);
                 break;
                 case AUTOCALMODE:
@@ -324,7 +330,7 @@ void CAirRide::CheckEvents()
             {
                 case TRAVELMODE:
                 case MANUALMODE:
-                case AUTOMODE:
+                case CAMPMODE:
                 case AUTOCALMODE:
                 SetState((states_t)mode);
                 break;
@@ -542,43 +548,45 @@ void CAirRide::Run()
     switch(state)
     {
         //Manual leveling
+        //need to pass in setpoint as read from set point pot
         case RUNMANUAL: 
-            CornerLR.Run(0-Tilt);  
-            CornerRR.Run(Tilt);
+            CornerL.Run(SetPoint-Tilt);  
+            CornerR.Run(SetPoint+Tilt);
             break;
             
         //Run at the calibrated travel height
         //todo change update frequency 
+        //need to pass in travel height as read from EEPROM
         case RUNTRAVEL:
-            CornerLR.Run(0);  
-            CornerRR.Run(0);  
+            CornerL.Run(LTravelHeight);  //568 adc counts
+            CornerR.Run(RTravelHeight);  //434 adc counts
             break;
             
-        //Auto level to the horizon
-        case RUNAUTO:
+        //Auto level to the  for camping
+        case RUNCAMP:
             //read accel
             CaclulateLevel();
-            CornerLR.Run(0);  
-            CornerRR.Run(0);
+            CornerL.Run(0);  
+            CornerR.Run(0);
             break;
             
         //manually level the coach to the horizon
         //then press caibrate to save the acellerometer values
         //to use for autoleveling
         case RUNAUTOCAL:
-            CornerLR.Run(0-Tilt);  
-            CornerRR.Run(Tilt);
+            CornerL.Run(0);  
+            CornerR.Run(0);
             break;
             
         //open all valves and dump all air from the system
         //as long as switch is closed
         case DUMPTANK:
             //open all valves to dump all air from system
-            CornerLR.Fill(Open);
-            CornerLR.Dump(Open);
+            CornerL.Fill(Open);
+            CornerL.Dump(Open);
         
-            CornerRR.Fill(Open);
-            CornerRR.Dump(Open);
+            CornerR.Fill(Open);
+            CornerR.Dump(Open);
             
             SetState(DUMPINGTANK);
             break;
@@ -587,11 +595,11 @@ void CAirRide::Run()
             //wait for user to release button, then close all valves
             if(!DumpTank())
             {
-                CornerLR.Fill(Closed);
-                CornerLR.Dump(Closed);
+                CornerL.Fill(Closed);
+                CornerL.Dump(Closed);
             
-                CornerRR.Fill(Closed);
-                CornerRR.Dump(Closed);
+                CornerR.Fill(Closed);
+                CornerR.Dump(Closed);
                 
                 //allow the event handler to switch us back to the current state
                 SetState(CALCOMPLETE);
@@ -604,8 +612,8 @@ void CAirRide::Run()
             //turn on Cel LED at start of calibration cycle
             CalLED(true);
             
-            CornerLR.Dump(Open);
-            CornerLR.Dump(Open);
+            CornerL.Dump(Open);
+            CornerL.Dump(Open);
             
             timeout = millis();
             LeftMinTime = millis();
@@ -619,10 +627,10 @@ void CAirRide::Run()
             //wait for car to be all the way down
             if(AllDown(&OldLeft, &OldRight, LRheight, RRheight))
             {
-                CornerLR.Dump(Closed);
-                CornerLR.Dump(Closed);
-                CornerLR.Fill(Open);     
-                CornerRR.Fill(Open);
+                CornerL.Dump(Closed);
+                CornerL.Dump(Closed);
+                CornerL.Fill(Open);     
+                CornerR.Fill(Open);
                 
                 timeout = millis();
                 LeftMinTime = millis();
@@ -647,8 +655,8 @@ void CAirRide::Run()
         case CALHIGH:
             if(AllUp(&OldLeft, &OldRight, LRheight, RRheight))
             {
-                CornerLR.Fill(Closed);     
-                CornerRR.Fill(Closed);
+                CornerL.Fill(Closed);     
+                CornerR.Fill(Closed);
                 
                 SetState(CALSAVELIMITS);
             }
@@ -656,8 +664,8 @@ void CAirRide::Run()
         case CALSAVELIMITS:
             EEProm.SaveLimits(LeftLowLimit, LeftHighLimit, RightLowLimit, RightHighLimit);
            
-            CornerLR.Limits(LeftLowLimit, LeftHighLimit);
-            CornerRR.Limits(RightLowLimit, RightHighLimit);
+            CornerL.Limits(LeftLowLimit, LeftHighLimit);
+            CornerR.Limits(RightLowLimit, RightHighLimit);
             
             SetState(CALDONELED);
             break;

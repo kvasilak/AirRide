@@ -25,9 +25,9 @@
 
 #define STATES_LIST(macro)\
     macro(RUNAUTOCAL)               \
-    macro(RUNTRAVEL)                \
+    macro(RUNCAMP)                \
     macro(RUNMANUAL)                  \
-    macro(RUNAUTO)                \
+    macro(RUNTRAVEL)                \
     macro(DUMPTANK)                 \
     macro(DUMPINGTANK)              \
     macro(CALLIMITS)                \
@@ -49,9 +49,9 @@ enum states_t
 //0 is ON!
 #define MODES_LIST(macro)\
     macro(AUTOCALMODE)  \
-    macro(TRAVELMODE)   \
+    macro(CAMPMODE)   \
     macro(MANUALMODE)     \
-    macro(AUTOMODE)   \
+    macro(TRAVELMODE)   \
 
     
 enum modes_t

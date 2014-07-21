@@ -41,26 +41,26 @@ CCorner::CCorner()://Position p):
   //PinHeightLeftRear(A0),   //analog in
   //PinHeightRghtRear(A2),   //analog in
   //PinSetpoint(A3),          //analog in setpoint pot
-  HoldOffTime(2000),
   LimitLow(100),            // set limits to 100 from high and low
   LimitHigh(924)
 {
 
 	LastTime 		= millis();
-    HoldOff         = millis();
 	filter_reg 		= GetHeight() << FILTER_SHIFT;
 
     pinMode(PINDUMP_RIGHTREAR, OUTPUT);
-    digitalWrite(PINDUMP_RIGHTREAR, HIGH);
+    digitalWrite(PINDUMP_RIGHTREAR, LOW);
     
     pinMode(PINDUMP_LEFTREAR, OUTPUT);
-    digitalWrite(PINDUMP_LEFTREAR, HIGH);
+    digitalWrite(PINDUMP_LEFTREAR, LOW);
     
     pinMode(PINFILL_RIGHTREAR, OUTPUT);
-    digitalWrite(PINFILL_RIGHTREAR, HIGH);
+    digitalWrite(PINFILL_RIGHTREAR, LOW);
     
     pinMode(PINFILL_LEFTREAR, OUTPUT);
-    digitalWrite(PINFILL_LEFTREAR, HIGH);
+    digitalWrite(PINFILL_LEFTREAR, LOW);
+    
+    UpdateTime = millis();
     
     //analog in pins need no setup
 }
@@ -154,15 +154,9 @@ void CCorner::SetState(ValveOp s)
 }
 
 //Uses the low pass filter described in "Simple Software Lowpass Filter.pdf"
-void CCorner::Run(int16_t tilt)
+void CCorner::Run(int32_t setpoint)
 {
 	int32_t slowheight; 		
-    	
-	//the setpoint pot raises and lowers both corners
-	//the tilt pot causes one corner to raise while the other lowers
-	//This is used to level the motorhome while camping
-	//setpoint + tilt is still limited to +-
-	int32_t setpoint 		= analogRead(PINSETPOINT) + tilt;
 	int32_t height 			= GetHeight();
     
     //prevent setpoint from exceeding cal limits
@@ -187,21 +181,23 @@ void CCorner::Run(int16_t tilt)
         // Scale output for unity gain.
         slowheight = (filter_reg >> FILTER_SHIFT);
 
-        
-        switch(corner)
-       {
-            case LeftRear:
-                Log("Corner", "LRError", height - setpoint);
-                Log("Corner", "LeftHeight", height);
-                Log("Corner", "LeftSet", setpoint);
-                break;
-            case RightRear:
-                Log("Corner", "RRError", height - setpoint);
-                Log("Corner", "RightHeight", height);
-                Log("Corner", "RightSet", setpoint);
-                break;
-       } 
-        
+        if(IsTimedOut(250, UpdateTime))
+        {
+           switch(corner)
+           {
+                case LeftRear:
+                    Log("Corner", "LRError", height - setpoint);
+                    Log("Corner", "LeftHeight", height);
+                    Log("Corner", "LeftSet", setpoint);
+                    break;
+                case RightRear:
+                    Log("Corner", "RRError", height - setpoint);
+                    Log("Corner", "RightHeight", height);
+                    Log("Corner", "RightSet", setpoint);
+                    break;
+           } 
+           UpdateTime = millis();
+        }
         
 
 
@@ -211,67 +207,108 @@ void CCorner::Run(int16_t tilt)
                 Fill(Closed);
                 Dump(Closed);
                 SetState(Holding);
+                HoldOffTime = millis();
+                break;
+            case HoldEntry:
+                if(IsTimedOut(1000, HoldOffTime))
+                {
+                    //Over ride the filter, force it to the current value
+                    //So the hold state doesn't keep changing
+                    filter_reg = (height << FILTER_SHIFT);
+                    HoldOffTime = millis();
+                    DoPulse = false;
+                    SetState(Holding);
+                }
                 break;
             case Holding:
                 //react slowly if already within deadband
-                if( slowheight < (setpoint - HoldDeadBand)) //<500
+                
+                //below setpoint
+                if( slowheight < (setpoint - HoldDeadBand))
                 {
-                    //Dont switch states till we've waited holdfOffTime
-                    //if(IsTimedOut(HoldOffTime, HoldOff))
-                    //{
+                    //minimum hold time so we don't go crazy hunting
+                    if(IsTimedOut(5000, HoldOffTime))
+                    {
                         SetState(Filling);
                         Fill(Open);
-                        CycleTime = 1;
-                    //}
+                        CycleTime = 10;
+                        
+                        //if within 2x deadband, only pulse the valve
+                        //so we don't over shoot the setpoint due to the long lag time
+                        
+                        if(height > (setpoint -(DeadBand * 5)) )
+                        {                        
+                            PulseStart = millis();
+                            DoPulse = true;
+                        }
+                    }
                 }
                 else if(slowheight > (setpoint + HoldDeadBand)) //>524
                 {
-                    //Dont switch states till we've waited holfOffTime
-                    //if(IsTimedOut(HoldOffTime, HoldOff))
-                    //{
+                    if(IsTimedOut(5000, HoldOffTime))
+                    {
                         SetState(Dumping);
                         Dump(Open);
                         
                         CycleTime = 1;
-                    //}
+                        
+                        //if within 2x deadband, only pulse the valve
+                        //so we don't over shoot the setpoint due to the long lag time
+                        
+                        if(height < setpoint + (DeadBand * 5))
+                        {                        
+                            PulseStart = millis();
+                            DoPulse = true;
+                        }
+                    }
                 }
                 break;
             case Filling:
+                if(DoPulse)
+                {
+                    if(IsTimedOut(250, PulseStart))
+                    {
+                        SetState(HoldEntry);
+                        Fill(Closed);
+                        CycleTime = 250;
+                        HoldOffTime = millis();
+                    }
+                }
                 //Respond quickly when filling
-                if(height > (setpoint-DeadBand)) //>509
+                else if(height > (setpoint-DeadBand))
                 {	
-                    SetState(Holding);
+                    SetState(HoldEntry);
                     Fill(Closed);
-                    
-                    //need to wait HoldOffTime till next state change
-                    HoldOff  = millis();
-                    
-                    CycleTime = 100;
-                    
-                    //Over ride the filter, force it to the current value
-                    //So the hold state doesn't keep changing
-                    filter_reg = (height << FILTER_SHIFT);
+                    CycleTime = 250;
+                    HoldOffTime = millis();
                 }
                 break;
             case Dumping:
-                //respond quickly when dumping
-                if(height < (setpoint + DeadBand)) //<515
+                if(DoPulse)
                 {
-                    SetState(Holding);
+                    if(IsTimedOut(250, PulseStart))
+                    {
+                        SetState(HoldEntry);
+                        Dump(Closed);
+                        CycleTime = 250;
+                        HoldOffTime = millis();
+                    }
+                }
+                //respond quickly when dumping
+                else if(height < (setpoint + DeadBand)) //<515
+                {
+                    SetState(HoldEntry);
                     Dump(Closed);
-                    
-                    CycleTime = 100;
-                    filter_reg = (height << FILTER_SHIFT);
-                    
-                    //need to wait HoldOffTime till next state change
-                    HoldOff = millis();
+                    CycleTime = 250;
+                    HoldOffTime = millis();
                 }
                 break;
             default:
                 Serial.println(">Corner,Default,State!!<");
                 Fill(Closed);
                 Dump(Closed);
-                SetState(Holding);
+                SetState(HoldEntry);
+                HoldOffTime = millis();
         }
     }
 }

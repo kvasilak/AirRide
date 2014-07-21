@@ -46,8 +46,8 @@ class CAirRide
     bool IsRising(int *OldLeft, int *Oldright, int LRheight, int RRheight);
     void CalLED(bool on);
     
-    CCorner CornerLR;
-    CCorner CornerRR;
+    CCorner CornerL;
+    CCorner CornerR;
     CEEprom EEProm;
 
     //const int PinTilt;
@@ -75,6 +75,9 @@ class CAirRide
     int16_t RightHeight;
     int16_t LeftAuto;
     int16_t RightAuto;
+    
+    int16_t LTravelHeight;
+    int16_t RTravelHeight; 
     
     modes_t mode;// = MANUALMODE;
 
