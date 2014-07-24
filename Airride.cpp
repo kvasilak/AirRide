@@ -123,7 +123,7 @@ bool CAirRide::Calibrate()
     //N.O. switch
     bool pressed = (HIGH == digitalRead(PINCAL));
    
-   Log(MODULE, "CalButton", digitalRead(PINCAL));
+   //Log(MODULE, "CalButton", digitalRead(PINCAL));
     
     switch(calstate)
     {
@@ -535,7 +535,7 @@ void CAirRide::Run()
     //increasing value (>512) means raise right side, lower left side
     //decreasing value (<512) means raise left side, Lover right side
     
-    if(IsTimedOut(100, SampleTime))
+    if(IsTimedOut(250, SampleTime))
     {      
         Log(MODULE, "SetPoint", SetPoint);
         Log(MODULE, "Tilt", Tilt);

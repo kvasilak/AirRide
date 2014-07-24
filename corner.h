@@ -47,7 +47,9 @@ enum Solenoid { Closed, Open };
 #define VALVE_STATES_LIST(macro)\
     macro(Initing)      \
     macro(Filling)      \
+    macro(FillPulse)    \
     macro(Dumping)      \
+    macro(DumpPulse)    \
     macro(HoldEntry)    \
     macro(Holding)      \
     macro(LastState)
@@ -58,7 +60,7 @@ enum ValveOp
 };
 
 // Parameter K for the filter
-#define FILTER_SHIFT    3//8
+#define FILTER_SHIFT    8//8
 #define DEAD_BAND       10 //5
 #define HOLD_DEAD_BAND  10 //8
 
@@ -69,6 +71,8 @@ class CCorner
 	void Run(int32_t setpoint);
     void Fill(Solenoid state);
     void Dump(Solenoid state);
+    void FillExit();
+    void DumpExit();
     void PrintCorner();
     void Init(Position p);
     void Limits(int16_t Low, int16_t high);
@@ -84,13 +88,15 @@ class CCorner
     uint32_t HoldOffTime;       //Min time between state changes
     uint32_t PulseStart;
     uint32_t UpdateTime;
+    uint32_t PulseTotal;
+    uint32_t PulseTime;
                         
     bool DoPulse;                        
     
     int16_t LimitLow;
     int16_t LimitHigh;
     
-    int16_t GetHeight();
+    int32_t GetHeight();
     void SetState(ValveOp s);
 
 };

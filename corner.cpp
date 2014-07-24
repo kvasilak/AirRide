@@ -34,13 +34,7 @@ CCorner::CCorner()://Position p):
   HoldDeadBand(HOLD_DEAD_BAND),
   CycleTime(100), //ms between updates
   State(Initing),
-  //PinDumpRightRear(10), //set IO pins here
-  //PinDumpLeftRear(8),
-  //PinFillRightRear(11),
-  //PinFillLeftRear(7),
-  //PinHeightLeftRear(A0),   //analog in
-  //PinHeightRghtRear(A2),   //analog in
-  //PinSetpoint(A3),          //analog in setpoint pot
+  PulseTime(250),
   LimitLow(100),            // set limits to 100 from high and low
   LimitHigh(924)
 {
@@ -76,17 +70,17 @@ void CCorner::Limits(int16_t Low, int16_t high)
 }
 
 //Get the height of this corner
-int16_t CCorner::GetHeight()
+int32_t CCorner::GetHeight()
 {
     int height=0;
     
     switch(corner)
    {
         case LeftRear:
-            height = 1024 - analogRead(PINLRHEIGHT); 
+            height = (int32_t)analogRead(PINLRHEIGHT); 
             break;
         case RightRear:
-            height = 1024 - analogRead(PINRRHEIGHT);
+            height = (int32_t)analogRead(PINRRHEIGHT);
             break;
    }   
    
@@ -153,6 +147,20 @@ void CCorner::SetState(ValveOp s)
     State = s;
 }
 
+void CCorner::FillExit()
+{
+    Fill(Closed);
+    SetState(HoldEntry);
+    HoldOffTime = millis();
+}
+
+void CCorner::DumpExit()
+{
+    Dump(Closed);
+    SetState(HoldEntry);
+    HoldOffTime = millis();
+}
+
 //Uses the low pass filter described in "Simple Software Lowpass Filter.pdf"
 void CCorner::Run(int32_t setpoint)
 {
@@ -186,14 +194,14 @@ void CCorner::Run(int32_t setpoint)
            switch(corner)
            {
                 case LeftRear:
-                    Log("Corner", "LRError", height - setpoint);
+                    Log("Corner", "LError", height - setpoint);
                     Log("Corner", "LeftHeight", height);
-                    Log("Corner", "LeftSet", setpoint);
+                    Log("Corner", "LeftSlow", slowheight - setpoint);
                     break;
                 case RightRear:
-                    Log("Corner", "RRError", height - setpoint);
+                    Log("Corner", "RError", height - setpoint);
                     Log("Corner", "RightHeight", height);
-                    Log("Corner", "RightSet", setpoint);
+                    Log("Corner", "RightSlow", slowheight - setpoint);
                     break;
            } 
            UpdateTime = millis();
@@ -207,6 +215,7 @@ void CCorner::Run(int32_t setpoint)
                 Fill(Closed);
                 Dump(Closed);
                 SetState(Holding);
+                filter_reg = (height << FILTER_SHIFT);
                 HoldOffTime = millis();
                 break;
             case HoldEntry:
@@ -214,9 +223,10 @@ void CCorner::Run(int32_t setpoint)
                 {
                     //Over ride the filter, force it to the current value
                     //So the hold state doesn't keep changing
-                    filter_reg = (height << FILTER_SHIFT);
+                    //maybe not....filter_reg = (height << FILTER_SHIFT);
                     HoldOffTime = millis();
                     DoPulse = false;
+                    CycleTime = 250;
                     SetState(Holding);
                 }
                 break;
@@ -233,13 +243,17 @@ void CCorner::Run(int32_t setpoint)
                         Fill(Open);
                         CycleTime = 10;
                         
-                        //if within 2x deadband, only pulse the valve
+                        //if within 5x deadband, only pulse the valve
                         //so we don't over shoot the setpoint due to the long lag time
                         
                         if(height > (setpoint -(DeadBand * 5)) )
                         {                        
+                            //calc total pulse time as a multiple of deadbands from setpoint
+                            //we know height < setpoint or we wouldn't be here
+                            PulseTotal = ((setpoint - height) / DeadBand) * PulseTime; // pulsetime = 250ms
                             PulseStart = millis();
-                            DoPulse = true;
+
+                            SetState(FillPulse);
                         }
                     }
                 }
@@ -250,59 +264,48 @@ void CCorner::Run(int32_t setpoint)
                         SetState(Dumping);
                         Dump(Open);
                         
-                        CycleTime = 1;
+                        CycleTime = 10;
                         
-                        //if within 2x deadband, only pulse the valve
+                        //if within 5x deadband, only pulse the valve
                         //so we don't over shoot the setpoint due to the long lag time
                         
                         if(height < setpoint + (DeadBand * 5))
                         {                        
+                            //calc total pulse time as a multiple of deadbands from setpoint
+                            //we know height > setpoint or we wouldn't be here
+                            PulseTotal = ((height - setpoint) / DeadBand) * PulseTime; // pulsetime = 250ms
                             PulseStart = millis();
-                            DoPulse = true;
+
+                            SetState(DumpPulse);
                         }
                     }
                 }
                 break;
-            case Filling:
-                if(DoPulse)
+            case FillPulse:
+                if(IsTimedOut(PulseTotal, PulseStart))
                 {
-                    if(IsTimedOut(250, PulseStart))
-                    {
-                        SetState(HoldEntry);
-                        Fill(Closed);
-                        CycleTime = 250;
-                        HoldOffTime = millis();
-                    }
+                    FillExit();
                 }
-                //Respond quickly when filling
-                else if(height > (setpoint-DeadBand))
-                {	
-                    SetState(HoldEntry);
-                    Fill(Closed);
-                    CycleTime = 250;
-                    HoldOffTime = millis();
+                break;
+            case Filling:
+                if(height >= (setpoint-DeadBand))
+                {    
+                    FillExit();
+                }
+                break;
+            case DumpPulse:
+                if(IsTimedOut(PulseTotal, PulseStart))
+                {
+                    DumpExit();
                 }
                 break;
             case Dumping:
-                if(DoPulse)
-                {
-                    if(IsTimedOut(250, PulseStart))
-                    {
-                        SetState(HoldEntry);
-                        Dump(Closed);
-                        CycleTime = 250;
-                        HoldOffTime = millis();
-                    }
-                }
-                //respond quickly when dumping
-                else if(height < (setpoint + DeadBand)) //<515
-                {
-                    SetState(HoldEntry);
-                    Dump(Closed);
-                    CycleTime = 250;
-                    HoldOffTime = millis();
+                if(height <= (setpoint + DeadBand))
+                {    
+                    DumpExit();
                 }
                 break;
+
             default:
                 Serial.println(">Corner,Default,State!!<");
                 Fill(Closed);
