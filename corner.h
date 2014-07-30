@@ -62,7 +62,6 @@ enum ValveOp
 // Parameter K for the filter
 #define FILTER_SHIFT    8//8
 #define DEAD_BAND       10 //5
-#define HOLD_DEAD_BAND  10 //8
 
 class CCorner 
 {

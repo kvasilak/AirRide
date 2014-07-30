@@ -30,8 +30,7 @@
 //There is one instance of this class for each corner of the vehicle usually 4
 //This is where the decisions are made as to add or remove air from the suspension
 CCorner::CCorner()://Position p):
-  DeadBand(DEAD_BAND),//ADC counts 0-1024
-  HoldDeadBand(HOLD_DEAD_BAND),
+  DeadBand(DEAD_BAND),
   CycleTime(100), //ms between updates
   State(Initing),
   PulseTime(250),
@@ -223,7 +222,7 @@ void CCorner::Run(int32_t setpoint)
                 {
                     //Over ride the filter, force it to the current value
                     //So the hold state doesn't keep changing
-                    //maybe not....filter_reg = (height << FILTER_SHIFT);
+                    filter_reg = (height << FILTER_SHIFT);
                     HoldOffTime = millis();
                     DoPulse = false;
                     CycleTime = 250;
@@ -234,14 +233,14 @@ void CCorner::Run(int32_t setpoint)
                 //react slowly if already within deadband
                 
                 //below setpoint
-                if( slowheight < (setpoint - HoldDeadBand))
+                if( slowheight < (setpoint - DeadBand))
                 {
                     //minimum hold time so we don't go crazy hunting
                     if(IsTimedOut(5000, HoldOffTime))
                     {
                         SetState(Filling);
                         Fill(Open);
-                        CycleTime = 10;
+                        CycleTime = 100;
                         
                         //if within 5x deadband, only pulse the valve
                         //so we don't over shoot the setpoint due to the long lag time
@@ -250,21 +249,21 @@ void CCorner::Run(int32_t setpoint)
                         {                        
                             //calc total pulse time as a multiple of deadbands from setpoint
                             //we know height < setpoint or we wouldn't be here
-                            PulseTotal = ((setpoint - height) / DeadBand) * PulseTime; // pulsetime = 250ms
+                            PulseTotal =(abs(setpoint - height) / DeadBand) * PulseTime; // pulsetime = 250ms
                             PulseStart = millis();
 
                             SetState(FillPulse);
                         }
                     }
                 }
-                else if(slowheight > (setpoint + HoldDeadBand)) //>524
+                else if(slowheight > (setpoint + DeadBand)) //>524
                 {
                     if(IsTimedOut(5000, HoldOffTime))
                     {
                         SetState(Dumping);
                         Dump(Open);
                         
-                        CycleTime = 10;
+                        CycleTime = 100;
                         
                         //if within 5x deadband, only pulse the valve
                         //so we don't over shoot the setpoint due to the long lag time
@@ -273,7 +272,7 @@ void CCorner::Run(int32_t setpoint)
                         {                        
                             //calc total pulse time as a multiple of deadbands from setpoint
                             //we know height > setpoint or we wouldn't be here
-                            PulseTotal = ((height - setpoint) / DeadBand) * PulseTime; // pulsetime = 250ms
+                            PulseTotal = (abs(height - setpoint) / DeadBand) * PulseTime; // pulsetime = 250ms
                             PulseStart = millis();
 
                             SetState(DumpPulse);

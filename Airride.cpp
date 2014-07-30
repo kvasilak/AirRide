@@ -37,7 +37,7 @@ CAirRide::CAirRide()
 
 void CAirRide::Init()
 {
-    Serial.println("*******GMC Air Ride Controller V1.0*********");
+    //Serial.println("*******GMC Air Ride Controller V1.0*********");
 
     SampleTime = millis();
 
@@ -53,8 +53,8 @@ void CAirRide::Init()
     EEProm.GetLimits(&LeftLowLimit, &LeftHighLimit, &RightLowLimit, &RightHighLimit);
     
     //TODO read from EEPROM also
-    LTravelHeight = 586;
-    RTravelHeight = 434;
+    LTravelHeight = 642;//586;
+    RTravelHeight = 698;//434;
    
     CornerL.Limits(LeftLowLimit, LeftHighLimit);
     CornerR.Limits(RightLowLimit, RightHighLimit);
@@ -550,8 +550,8 @@ void CAirRide::Run()
         //Manual leveling
         //need to pass in setpoint as read from set point pot
         case RUNMANUAL: 
-            CornerL.Run(SetPoint-Tilt);  
-            CornerR.Run(SetPoint+Tilt);
+            CornerL.Run(SetPoint - Tilt);  
+            CornerR.Run(SetPoint + Tilt);
             break;
             
         //Run at the calibrated travel height
