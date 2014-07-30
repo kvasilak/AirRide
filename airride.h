@@ -25,6 +25,7 @@
 #include "corner.h"
 #include "common.h"
 #include "gmceeprom.h"
+#include "height.h"
 
 class CAirRide
 {
@@ -49,6 +50,7 @@ class CAirRide
     CCorner CornerL;
     CCorner CornerR;
     CEEprom EEProm;
+    CHeight TheHeight;
 
     //const int PinTilt;
     //const int PinDumpTank;

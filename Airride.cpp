@@ -47,8 +47,8 @@ void CAirRide::Init()
     pinMode(PINMODE2, INPUT_PULLUP);
     pinMode(PINCAL, INPUT_PULLUP);
   
-    CornerL.Init(LeftRear); 
-    CornerR.Init(RightRear);
+    CornerL.Init(LeftRear, &TheHeight); 
+    CornerR.Init(RightRear, &TheHeight);
     
     EEProm.GetLimits(&LeftLowLimit, &LeftHighLimit, &RightLowLimit, &RightHighLimit);
     
@@ -80,7 +80,7 @@ void CAirRide::SetState(states_t s)
 void CAirRide::CaclulateLevel()
 {
 //todo...implement it!
-//handle not enough suspesion rage issues
+//handle not enough suspension range issues
 //handle travel limits, ranges stored in EEPROM
     LeftLevel = 512;
     RightLevel = 512;
@@ -225,15 +225,16 @@ void CAirRide::CheckEvents()
                 case MANUALMODE:
                 case CAMPMODE:
                 case AUTOCALMODE:
-                SetState((states_t)mode);
+                    SetState((states_t)mode);
+                    TheHeight.Mode((states_t)mode);
                 break;
                 //No mode change
                 case TRAVELMODE:
-                //find the high and low limits
-                if(Calibrate())
-                {
-                    SetState(CALLIMITS);
-                }
+                    //find the high and low limits
+                    if(Calibrate())
+                    {
+                        SetState(CALLIMITS);
+                    }
                 
                 //what are the chances of dumptank and calibrate being pressed at the exact same time?
                 //if(DumpTank())
@@ -251,9 +252,8 @@ void CAirRide::CheckEvents()
                 case TRAVELMODE:
                 case CAMPMODE:
                 case AUTOCALMODE:
-                
-                //Log(MODULE, "DumpTank", "Check%");
-                SetState((states_t)mode);
+                    SetState((states_t)mode);
+                    TheHeight.Mode((states_t)mode);
                 break;
                 case MANUALMODE:
                 //save the current height as the travel height
@@ -278,7 +278,8 @@ void CAirRide::CheckEvents()
                 case TRAVELMODE:
                 case MANUALMODE:
                 case AUTOCALMODE:
-                SetState((states_t)mode);
+                    SetState((states_t)mode);
+                    TheHeight.Mode((states_t)mode);
                 break;
                 case CAMPMODE:
                 //if(DumpTank())
@@ -525,6 +526,9 @@ void CAirRide::CalLED( bool on)
 
 void CAirRide::Run() 
 {
+    LeftHeight.Run();
+    RightHeight.Run()
+    
     //LRheight = 1024 - analogRead(A0);
     //RRheight = 1024 - analogRead(A2);
     SetPoint = analogRead(PINSETPOINT);
@@ -550,16 +554,16 @@ void CAirRide::Run()
         //Manual leveling
         //need to pass in setpoint as read from set point pot
         case RUNMANUAL: 
-            CornerL.Run(SetPoint-Tilt);  
-            CornerR.Run(SetPoint+Tilt);
+            CornerL.Run();//SetPoint-Tilt);  
+            CornerR.Run();//SetPoint+Tilt);
             break;
             
         //Run at the calibrated travel height
         //todo change update frequency 
         //need to pass in travel height as read from EEPROM
         case RUNTRAVEL:
-            CornerL.Run(LTravelHeight);  //568 adc counts
-            CornerR.Run(RTravelHeight);  //434 adc counts
+            CornerL.Run();//LTravelHeight);  //568 adc counts
+            CornerR.Run();//RTravelHeight);  //434 adc counts
             break;
             
         //Auto level to the  for camping

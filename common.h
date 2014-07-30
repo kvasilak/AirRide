@@ -59,6 +59,8 @@ enum modes_t
   MODES_LIST(ENUMIFY)
 };
 
+
+
 bool IsTimedOut(uint32_t period, uint32_t start);
   
 //IO map
@@ -84,5 +86,11 @@ bool IsTimedOut(uint32_t period, uint32_t start);
 #define PINFILL_RIGHTREAR   11
 #define ACCEL_I2C_DATA      12
 #define ACCEL_I2C_CLOCK     13
+
+enum Position 
+{ 
+    LeftRear, 
+    RightRear
+};
 
 #endif

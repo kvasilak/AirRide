@@ -29,13 +29,9 @@ need to predict movement or use shorter bursts to sneak up on height
 
 #include <stdint.h>
 #include "debug.h"
+#include "height.h"
 
-enum Position { 
-        LeftFront, 
-        RightFront, 
-        LeftRear, 
-        RightRear, 
-        Height};
+
   
 enum LEDS { OK_LED, Error_LED, IN_Position_LED };
 
@@ -68,18 +64,17 @@ class CCorner
 {
 	public:
 	CCorner();//Position c);
-	void Run(int32_t setpoint);
+	void Run();
     void Fill(Solenoid state);
     void Dump(Solenoid state);
     void FillExit();
     void DumpExit();
     void PrintCorner();
-    void Init(Position p);
+    void Init(Position p );
     void Limits(int16_t Low, int16_t high);
   
 	private:
 	int16_t DeadBand;			//how far the corner has to move before we try to adjust the position
-	int16_t HoldDeadBand; 	    //deadband + hysterysis
 	Position corner;
 	uint32_t CycleTime;		    //The minimum time between valve state changes. Prevents valve chatter
 	ValveOp State;
@@ -96,7 +91,7 @@ class CCorner
     int16_t LimitLow;
     int16_t LimitHigh;
     
-    int32_t GetHeight();
+    //int32_t GetHeight();
     void SetState(ValveOp s);
 
 };

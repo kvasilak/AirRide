@@ -29,9 +29,8 @@
 //This class is responsible for managing the height of a corner.
 //There is one instance of this class for each corner of the vehicle usually 4
 //This is where the decisions are made as to add or remove air from the suspension
-CCorner::CCorner()://Position p):
-  DeadBand(DEAD_BAND),//ADC counts 0-1024
-  HoldDeadBand(HOLD_DEAD_BAND),
+CCorner::CCorner():
+  DeadBand(DEAD_BAND);
   CycleTime(100), //ms between updates
   State(Initing),
   PulseTime(250),
@@ -40,7 +39,7 @@ CCorner::CCorner()://Position p):
 {
 
 	LastTime 		= millis();
-	filter_reg 		= GetHeight() << FILTER_SHIFT;
+//	filter_reg 		= GetHeight() << FILTER_SHIFT;
 
     pinMode(PINDUMP_RIGHTREAR, OUTPUT);
     digitalWrite(PINDUMP_RIGHTREAR, LOW);
@@ -59,9 +58,10 @@ CCorner::CCorner()://Position p):
     //analog in pins need no setup
 }
 
-void CCorner::Init(Position p)
+void CCorner::Init(Position p, CHeight *h)
 {
     corner = p;
+    height = h;
 }
 void CCorner::Limits(int16_t Low, int16_t high)
 {
@@ -69,23 +69,24 @@ void CCorner::Limits(int16_t Low, int16_t high)
     LimitHigh = high -2;
 }
 
+//moved to airride.cpp
 //Get the height of this corner
-int32_t CCorner::GetHeight()
-{
-    int height=0;
+// int32_t CCorner::GetHeight()
+// {
+    // int height=0;
     
-    switch(corner)
-   {
-        case LeftRear:
-            height = (int32_t)analogRead(PINLRHEIGHT); 
-            break;
-        case RightRear:
-            height = (int32_t)analogRead(PINRRHEIGHT);
-            break;
-   }   
+    // switch(corner)
+   // {
+        // case LeftRear:
+            // height = (int32_t)analogRead(PINLRHEIGHT); 
+            // break;
+        // case RightRear:
+            // height = (int32_t)analogRead(PINRRHEIGHT);
+            // break;
+   // }   
    
-   return height;
-}
+   // return height;
+// }
 
 //open or close the fill solenoid for this corner
 void CCorner::Fill(Solenoid state)
@@ -161,11 +162,12 @@ void CCorner::DumpExit()
     HoldOffTime = millis();
 }
 
-//Uses the low pass filter described in "Simple Software Lowpass Filter.pdf"
-void CCorner::Run(int32_t setpoint)
+//Air ride passes in a pointer to a class that keeps track of height values
+//These values are used here to determine when to adjust height
+void CCorner::Run() //int32_t height, int32_t setpoint)
 {
-	int32_t slowheight; 		
-	int32_t height 			= GetHeight();
+	//int32_t slowheight; 		
+	//int32_t height 			= GetHeight();
     
     //prevent setpoint from exceeding cal limits
 /*     if(setpoint > LimitHigh)
@@ -179,33 +181,33 @@ void CCorner::Run(int32_t setpoint)
     } */
 
 	//sample Slowly
-	if(IsTimedOut(CycleTime, LastTime) )
-	{
+//	if(IsTimedOut(CycleTime, LastTime) )
+//	{
 		// Update filter with current sample.
-		filter_reg = filter_reg - (filter_reg >> FILTER_SHIFT) + height;
+//		filter_reg = filter_reg - (filter_reg >> FILTER_SHIFT) + height;
 
-		LastTime = millis();
+//		LastTime = millis();
         
         // Scale output for unity gain.
-        slowheight = (filter_reg >> FILTER_SHIFT);
+ //       slowheight = (filter_reg >> FILTER_SHIFT);
 
-        if(IsTimedOut(250, UpdateTime))
-        {
-           switch(corner)
-           {
-                case LeftRear:
-                    Log("Corner", "LError", height - setpoint);
-                    Log("Corner", "LeftHeight", height);
-                    Log("Corner", "LeftSlow", slowheight - setpoint);
-                    break;
-                case RightRear:
-                    Log("Corner", "RError", height - setpoint);
-                    Log("Corner", "RightHeight", height);
-                    Log("Corner", "RightSlow", slowheight - setpoint);
-                    break;
-           } 
-           UpdateTime = millis();
-        }
+        // if(IsTimedOut(250, UpdateTime))
+        // {
+           // switch(corner)
+           // {
+                // case LeftRear:
+                    // Log("Corner", "LError", height - setpoint);
+                    // Log("Corner", "LeftHeight", height);
+                    // Log("Corner", "LeftSlow", slowheight - setpoint);
+                    // break;
+                // case RightRear:
+                    // Log("Corner", "RError", height - setpoint);
+                    // Log("Corner", "RightHeight", height);
+                    // Log("Corner", "RightSlow", slowheight - setpoint);
+                    // break;
+           // } 
+           // UpdateTime = millis();
+        // }
         
 
 
@@ -215,15 +217,12 @@ void CCorner::Run(int32_t setpoint)
                 Fill(Closed);
                 Dump(Closed);
                 SetState(Holding);
-                filter_reg = (height << FILTER_SHIFT);
                 HoldOffTime = millis();
                 break;
             case HoldEntry:
                 if(IsTimedOut(1000, HoldOffTime))
                 {
-                    //Over ride the filter, force it to the current value
-                    //So the hold state doesn't keep changing
-                    //maybe not....filter_reg = (height << FILTER_SHIFT);
+
                     HoldOffTime = millis();
                     DoPulse = false;
                     CycleTime = 250;
@@ -234,7 +233,7 @@ void CCorner::Run(int32_t setpoint)
                 //react slowly if already within deadband
                 
                 //below setpoint
-                if( slowheight < (setpoint - HoldDeadBand))
+                if( m_height->SlowHeight(corner) < (m_height->SetPoint(corner) - DeadBand))
                 {
                     //minimum hold time so we don't go crazy hunting
                     if(IsTimedOut(5000, HoldOffTime))
@@ -245,19 +244,18 @@ void CCorner::Run(int32_t setpoint)
                         
                         //if within 5x deadband, only pulse the valve
                         //so we don't over shoot the setpoint due to the long lag time
-                        
-                        if(height > (setpoint -(DeadBand * 5)) )
+                        if(m_height->FastHeight(corner) > (m_height->SetPoint(corner) -(DeadBand * 5)) )
                         {                        
                             //calc total pulse time as a multiple of deadbands from setpoint
                             //we know height < setpoint or we wouldn't be here
-                            PulseTotal = ((setpoint - height) / DeadBand) * PulseTime; // pulsetime = 250ms
+                            PulseTotal = ((m_height->SetPoint(corner) - m_height->FastHeight(corner) ) / DeadBand) * PulseTime; // pulsetime = 250ms
                             PulseStart = millis();
 
                             SetState(FillPulse);
                         }
                     }
                 }
-                else if(slowheight > (setpoint + HoldDeadBand)) //>524
+                else if(m_height->SlowHeight(corner) > (m_height->SetPoint(corner) + DeadBand)) //>524
                 {
                     if(IsTimedOut(5000, HoldOffTime))
                     {
@@ -266,14 +264,13 @@ void CCorner::Run(int32_t setpoint)
                         
                         CycleTime = 10;
                         
-                        //if within 5x deadband, only pulse the valve
+                        //if within 5x DeadBand, only pulse the valve
                         //so we don't over shoot the setpoint due to the long lag time
-                        
-                        if(height < setpoint + (DeadBand * 5))
+                        if(m_height->FastHeight(corner) < m_height->SetPoint(corner) + (DeadBand * 5))
                         {                        
                             //calc total pulse time as a multiple of deadbands from setpoint
                             //we know height > setpoint or we wouldn't be here
-                            PulseTotal = ((height - setpoint) / DeadBand) * PulseTime; // pulsetime = 250ms
+                            PulseTotal = ((m_height->FastHeight(corner) - m_height->SetPoint(corner)) / DeadBand) * PulseTime; // pulsetime = 250ms
                             PulseStart = millis();
 
                             SetState(DumpPulse);
