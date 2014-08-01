@@ -60,6 +60,16 @@ CCorner::CCorner()://Position p):
 
 void CCorner::Init(Position p)
 {
+    //initialize average to current height
+    int16_t h = GetHeight();
+    
+    for(int i=0; i<100; i++)
+    {
+        HeightAvg[i] = h;
+    }
+    
+    count = 0;
+    
     corner = p;
 }
 void CCorner::Limits(int16_t Low, int16_t high)
@@ -160,6 +170,28 @@ void CCorner::DumpExit()
     HoldOffTime = millis();
 }
 
+uint16_t CCorner::Average(uint16_t value)
+{
+    uint32_t average = 0;
+    int i;
+    
+    //rollover if we hit the end
+    if(count >= 100) count = 0;
+    
+    //add new value to array
+    HeightAvg[count] = value;
+    
+    count++;
+    
+    //Calculate new average
+    for(i=0; i<100; i++)
+    {
+        average += HeightAvg[i];
+    }
+    
+    return (uint16_t)(average/100);
+}
+
 //Uses the low pass filter described in "Simple Software Lowpass Filter.pdf"
 void CCorner::Run(int32_t setpoint)
 {
@@ -180,14 +212,17 @@ void CCorner::Run(int32_t setpoint)
 	//sample Slowly
 	if(IsTimedOut(CycleTime, LastTime) )
 	{
-		// Update filter with current sample.
-		filter_reg = filter_reg - (filter_reg >> FILTER_SHIFT) + height;
-
-		LastTime = millis();
+        AverageHeight = Average( height);
         
+		// Update filter with current sample.
+		filter_reg = filter_reg - (filter_reg >> FILTER_SHIFT) + AverageHeight;
+
         // Scale output for unity gain.
         slowheight = (filter_reg >> FILTER_SHIFT);
 
+		LastTime = millis();
+        
+        
         if(IsTimedOut(250, UpdateTime))
         {
            switch(corner)

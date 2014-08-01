@@ -97,6 +97,10 @@ class CCorner
     
     int32_t GetHeight();
     void SetState(ValveOp s);
-
+    
+    int16_t HeightAvg[100];
+    int count;
+    int16_t AverageHeight;
+    uint16_t Average(uint16_t value);
 };
 #endif //INCLUDE_CORNER_H
