@@ -75,6 +75,7 @@ class CCorner
     void PrintCorner();
     void Init(Position p);
     void Limits(int16_t Low, int16_t high);
+    void SetLongFilter(bool slow);
   
 	private:
 	int16_t DeadBand;			//how far the corner has to move before we try to adjust the position
@@ -99,8 +100,17 @@ class CCorner
     void SetState(ValveOp s);
     
     int16_t HeightAvg[100];
-    int count;
-    int16_t AverageHeight;
+    int32_t AverageHeight;
     uint16_t Average(uint16_t value);
+    
+    int16_t SmoothAvg[10];
+    int32_t SmoothHeight;
+    uint16_t Smooth(uint16_t value);
+    
+    bool LongFilter;
+    int SlowAt;
+    int SmoothAt;
+    int32_t slowheight; 
+    int count;
 };
 #endif //INCLUDE_CORNER_H

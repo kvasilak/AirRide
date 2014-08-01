@@ -35,7 +35,8 @@ CCorner::CCorner()://Position p):
   State(Initing),
   PulseTime(250),
   LimitLow(100),            // set limits to 100 from high and low
-  LimitHigh(924)
+  LimitHigh(924),
+  LongFilter(false)
 {
 
 	LastTime 		= millis();
@@ -60,17 +61,26 @@ CCorner::CCorner()://Position p):
 
 void CCorner::Init(Position p)
 {
-    //initialize average to current height
-    int16_t h = GetHeight();
+    int i;
+    int32_t height = GetHeight();
     
-    for(int i=0; i<100; i++)
+    //initalize filters
+    for(i=0; i<10; i++)
     {
-        HeightAvg[i] = h;
+        SmoothAvg[i] = height;      
     }
     
-    count = 0;
+    for(i=0; i<100; i++)
+    {
+        HeightAvg[i] = height;      
+    }
     
+    filter_reg = (height << FILTER_SHIFT);
+
+    count = 0;
     corner = p;
+    SlowAt = 0;
+    SmoothAt = 0;
 }
 void CCorner::Limits(int16_t Low, int16_t high)
 {
@@ -173,18 +183,17 @@ void CCorner::DumpExit()
 uint16_t CCorner::Average(uint16_t value)
 {
     uint32_t average = 0;
-    int i;
     
     //rollover if we hit the end
-    if(count >= 100) count = 0;
+    if(SlowAt > 99) SlowAt = 0;
     
     //add new value to array
-    HeightAvg[count] = value;
+    HeightAvg[SlowAt] = value;
     
-    count++;
+    SlowAt++;
     
     //Calculate new average
-    for(i=0; i<100; i++)
+    for(int i=0; i<100; i++)
     {
         average += HeightAvg[i];
     }
@@ -192,11 +201,51 @@ uint16_t CCorner::Average(uint16_t value)
     return (uint16_t)(average/100);
 }
 
-//Uses the low pass filter described in "Simple Software Lowpass Filter.pdf"
-void CCorner::Run(int32_t setpoint)
+uint16_t CCorner::Smooth(uint16_t value)
 {
-	int32_t slowheight; 		
+    uint32_t average = 0;
+    
+    //rollover if we hit the end
+    if(SmoothAt > 9) SmoothAt = 0;
+    
+    //add new value to array
+    SmoothAvg[SmoothAt] = value;
+    
+    SmoothAt++;
+    
+    //Calculate new average
+    for(int i=0; i<10; i++)
+    {
+        average += SmoothAvg[i];
+    }
+    
+    return (uint16_t)(average/10);
+}
+
+
+void CCorner::SetLongFilter(bool slow)
+{
+    //reset filters if switching to long filter
+    if((false == LongFilter) && (true == slow))
+    {
+        for(int i=0; i<100; i++)
+        {
+            HeightAvg[i] = SmoothHeight;      
+        }
+        
+        filter_reg = (SmoothHeight << FILTER_SHIFT);
+    }
+    
+    LongFilter = slow;
+}
+
+
+//Uses the low pass IIR filter described in "Simple Software Lowpass Filter.pdf"
+//And two simple FIR filters
+void CCorner::Run(int32_t setpoint)
+{		
 	int32_t height 			= GetHeight();
+    int i;
     
     //prevent setpoint from exceeding cal limits
 /*     if(setpoint > LimitHigh)
@@ -211,17 +260,40 @@ void CCorner::Run(int32_t setpoint)
 
 	//sample Slowly
 	if(IsTimedOut(CycleTime, LastTime) )
-	{
-        AverageHeight = Average( height);
-        
-		// Update filter with current sample.
-		filter_reg = filter_reg - (filter_reg >> FILTER_SHIFT) + AverageHeight;
+	{        
+        if( LongFilter)
+        {
+            //fast smoothing filter to take out sampling noise
+            SmoothHeight = Smooth(height);
+            
+            if(count >9)
+            {
+                count = 0;
+            
+                //Longer filter to take out bumps and roll
+                AverageHeight = Average( SmoothHeight);
 
-        // Scale output for unity gain.
-        slowheight = (filter_reg >> FILTER_SHIFT);
+                //IIR filter to take out even more bump and roll
+                // Update IIR filter with current sample.
+                filter_reg = filter_reg - (filter_reg >> FILTER_SHIFT) + AverageHeight;
 
-		LastTime = millis();
-        
+                // Scale output for unity gain.
+                slowheight = (filter_reg >> FILTER_SHIFT);
+            }
+            
+            count++;
+        }
+        else
+        {
+            SmoothHeight = height;
+            
+            filter_reg = filter_reg - (filter_reg >> FILTER_SHIFT) + height;
+
+            // Scale output for unity gain.
+            slowheight = (filter_reg >> FILTER_SHIFT);
+        }
+
+		LastTime = millis();        
         
         if(IsTimedOut(250, UpdateTime))
         {
@@ -249,7 +321,7 @@ void CCorner::Run(int32_t setpoint)
                 Fill(Closed);
                 Dump(Closed);
                 SetState(Holding);
-                filter_reg = (height << FILTER_SHIFT);
+                //filter_reg = (height << FILTER_SHIFT);
                 HoldOffTime = millis();
                 break;
             case HoldEntry:
@@ -258,9 +330,15 @@ void CCorner::Run(int32_t setpoint)
                     //Over ride the filter, force it to the current value
                     //So the hold state doesn't keep changing
                     filter_reg = (height << FILTER_SHIFT);
+                    
+                    for(i=0; i<100; i++)
+                    {
+                        HeightAvg[i] = height;      
+                    }
+    
                     HoldOffTime = millis();
                     DoPulse = false;
-                    CycleTime = 250;
+                    CycleTime = 100;
                     SetState(Holding);
                 }
                 break;
@@ -349,4 +427,6 @@ void CCorner::Run(int32_t setpoint)
         }
     }
 }
+
+
 

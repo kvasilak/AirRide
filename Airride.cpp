@@ -550,14 +550,19 @@ void CAirRide::Run()
         //Manual leveling
         //need to pass in setpoint as read from set point pot
         case RUNMANUAL: 
+            CornerL.SetLongFilter(false);
+            CornerR.SetLongFilter(false);
+            
             CornerL.Run(SetPoint - Tilt);  
             CornerR.Run(SetPoint + Tilt);
             break;
             
         //Run at the calibrated travel height
-        //todo change update frequency 
         //need to pass in travel height as read from EEPROM
         case RUNTRAVEL:
+            CornerL.SetLongFilter(true);
+            CornerR.SetLongFilter(true);
+            
             CornerL.Run(LTravelHeight);  //568 adc counts
             CornerR.Run(RTravelHeight);  //434 adc counts
             break;
@@ -566,8 +571,8 @@ void CAirRide::Run()
         case RUNCAMP:
             //read accel
             CaclulateLevel();
-            CornerL.Run(0);  
-            CornerR.Run(0);
+            CornerL.Run(512);  
+            CornerR.Run(512);
             break;
             
         //manually level the coach to the horizon
