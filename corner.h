@@ -76,6 +76,8 @@ class CCorner
     void Init(Position p);
     void Limits(int16_t Low, int16_t high);
     void SetLongFilter(bool slow);
+    void AtHeight(bool at);
+    bool AtHeight();
   
 	private:
 	int16_t DeadBand;			//how far the corner has to move before we try to adjust the position
@@ -112,5 +114,7 @@ class CCorner
     int SmoothAt;
     int32_t slowheight; 
     int count;
+    bool IsAtHeight;
+    
 };
 #endif //INCLUDE_CORNER_H

@@ -41,7 +41,7 @@ void CAirRide::Init()
 
     SampleTime = millis();
 
-    SetState(RUNMANUAL);
+    SetState(ENTERMANUAL);
 
     pinMode(PINMODE1, INPUT_PULLUP);
     pinMode(PINMODE2, INPUT_PULLUP);
@@ -53,8 +53,8 @@ void CAirRide::Init()
     EEProm.GetLimits(&LeftLowLimit, &LeftHighLimit, &RightLowLimit, &RightHighLimit);
     
     //TODO read from EEPROM also
-    LTravelHeight = 642;//586;
-    RTravelHeight = 698;//434;
+    LTravelHeight = 642;//GetLeftTravel();
+    RTravelHeight = 698;//GetRightTravel();
    
     CornerL.Limits(LeftLowLimit, LeftHighLimit);
     CornerR.Limits(RightLowLimit, RightHighLimit);
@@ -65,7 +65,7 @@ void CAirRide::Init()
 
 void CAirRide::SetState(states_t s)
 {
-    static states_t laststate = DUMPINGTANK;
+    static states_t laststate = LASTSTATE;
     static char *statestrs[] = {STATES_LIST(STRINGIFY)};
     
     if(s != laststate)
@@ -86,27 +86,6 @@ void CAirRide::CaclulateLevel()
     RightLevel = 512;
 }
 
-//input is analog
-//if at zero (<512) button is pressed
-bool CAirRide::DumpTank()
-{
-    int a = analogRead(PINDUMP);
-    bool pressed = false;
-    //Log(MODULE, "DumpTank", a);
-    
-    if( a < 512 )
-    {
-        Log(MODULE, "DumpTank", "UnDumping");
-        
-    }
-    else
-    {
-        Log(MODULE, "DumpTank", "Dumping");
-        pressed = true;
-    }
-    
-    return pressed;
-}
 
 //only called when appropriate
 //button must transition as follows
@@ -181,22 +160,15 @@ bool CAirRide::Calibrate()
 }
 
 // mode 1   mode 2  state
-//   0        0       Manual
-//   1        0       Travel
-//   0        1       Autolevel
-//   1        1       Autolevel calibrate
+//   0        0       Camp calibrate 
+//   0        1       Camp ( horizon level )
+//   1        0       Manual
+//   1        1       Travel 
 void CAirRide::GetMode()
 {
     static modes_t LastMode = CAMPMODE;//should always be different the first test
     static char *states[] = {MODES_LIST(STRINGIFY)};
-    //modes_t themode=CAMPMODE;
-    
-    //input truth table
-    //Logic is inverted
-    //11 Auto mode
-    //10 Travel mode
-    //01 Manual mode
-    //00 Auto Calibrate
+
     int m = digitalRead(PINMODE1);
     m |= digitalRead(PINMODE2) <<1;
   
@@ -229,30 +201,21 @@ void CAirRide::CheckEvents()
                 break;
                 //No mode change
                 case TRAVELMODE:
-                //find the high and low limits
+                //run the state machine to find the suspension high and low limits
                 if(Calibrate())
                 {
                     SetState(CALLIMITS);
                 }
-                
-                //what are the chances of dumptank and calibrate being pressed at the exact same time?
-                //if(DumpTank())
-                //{
-                //    SetState(DUMPTANK);
-                //}
                 break;
             }
             break;
         case RUNMANUAL:
             switch(mode)
             {
-            //Log(MODULE, "DumpTank", "Check!!");
-            
                 case TRAVELMODE:
                 case CAMPMODE:
                 case AUTOCALMODE:
                 
-                //Log(MODULE, "DumpTank", "Check%");
                 SetState((states_t)mode);
                 break;
                 case MANUALMODE:
@@ -263,12 +226,6 @@ void CAirRide::CheckEvents()
                     EEProm.SaveRightTravel(RightHeight);
                     SetState(CALDONELED);
                 }
-                
-                //Log(MODULE, "DumpTank", "Check");
-                //if(DumpTank())
-                //{
-                //    SetState(DUMPTANK);
-                //}
                 break;
             }
             break;
@@ -281,10 +238,6 @@ void CAirRide::CheckEvents()
                 SetState((states_t)mode);
                 break;
                 case CAMPMODE:
-                //if(DumpTank())
-                //{
-                //    SetState(DUMPTANK);
-                //}
                 break;
             }
             break;
@@ -305,17 +258,9 @@ void CAirRide::CheckEvents()
                     EEProm.SaveRightAuto(RightAuto);
                     SetState(CALDONELED);
                 }
-                
-                //if(DumpTank())
-                //{
-                //    SetState(DUMPTANK);
-                //}
                 break;
             }
             break;
-        //no mode change allowed until the user lets go of the dump button, or we'd just end up back here
-        case DUMPTANK:
-        case DUMPINGTANK:
         //no change allowed during limit calibration
         case CALLIMITS: 
         case CALLOW:
@@ -525,8 +470,6 @@ void CAirRide::CalLED( bool on)
 
 void CAirRide::Run() 
 {
-    //LRheight = 1024 - analogRead(A0);
-    //RRheight = 1024 - analogRead(A2);
     SetPoint = analogRead(PINSETPOINT);
     Tilt = analogRead(PINTILT)-512;
         
@@ -549,22 +492,48 @@ void CAirRide::Run()
     {
         //Manual leveling
         //need to pass in setpoint as read from set point pot
-        case RUNMANUAL: 
+        case ENTERMANUAL:
             CornerL.SetLongFilter(false);
             CornerR.SetLongFilter(false);
             
+            SetState(RUNMANUAL);
+            break;
+        case RUNMANUAL: 
             CornerL.Run(SetPoint - Tilt);  
             CornerR.Run(SetPoint + Tilt);
             break;
             
         //Run at the calibrated travel height
         //need to pass in travel height as read from EEPROM
-        case RUNTRAVEL:
-            CornerL.SetLongFilter(true);
-            CornerR.SetLongFilter(true);
+        case ENTERTRAVEL:
+            CornerL.SetLongFilter(false);
+            CornerR.SetLongFilter(false);
             
-            CornerL.Run(LTravelHeight);  //568 adc counts
-            CornerR.Run(RTravelHeight);  //434 adc counts
+            //reset the at height flag
+            CornerL.AtHeight(false);
+            CornerR.AtHeight(false);
+            
+            SetState(STARTTRAVEL);
+            break;
+            
+        case STARTTRAVEL:
+            //Start travel mode in a fast reacting mode
+            //until height is reached
+            if( CornerL.AtHeight() && CornerR.AtHeight() )
+            {
+                CornerL.SetLongFilter(true);
+                CornerR.SetLongFilter(true);    
+
+                SetState(RUNTRAVEL);
+            }
+            else
+            {
+                CornerL.Run(LTravelHeight);  
+                CornerR.Run(RTravelHeight);
+            }
+        case RUNTRAVEL:
+            CornerL.Run(LTravelHeight);  
+            CornerR.Run(RTravelHeight);  
             break;
             
         //Auto level to the  for camping
@@ -582,35 +551,6 @@ void CAirRide::Run()
             CornerL.Run(0);  
             CornerR.Run(0);
             break;
-            
-        //open all valves and dump all air from the system
-        //as long as switch is closed
-        case DUMPTANK:
-            //open all valves to dump all air from system
-            CornerL.Fill(Open);
-            CornerL.Dump(Open);
-        
-            CornerR.Fill(Open);
-            CornerR.Dump(Open);
-            
-            SetState(DUMPINGTANK);
-            break;
-            
-         case DUMPINGTANK:
-            //wait for user to release button, then close all valves
-            if(!DumpTank())
-            {
-                CornerL.Fill(Closed);
-                CornerL.Dump(Closed);
-            
-                CornerR.Fill(Closed);
-                CornerR.Dump(Closed);
-                
-                //allow the event handler to switch us back to the current state
-                SetState(CALCOMPLETE);
-            }
-            break;
-            
         //raise and lower the coach to find the upper and lower limits of travel 
         //must be in travelmode before pressing cal button
         case CALLIMITS:

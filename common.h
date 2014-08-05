@@ -25,11 +25,9 @@
 
 #define STATES_LIST(macro)\
     macro(RUNAUTOCAL)               \
-    macro(RUNCAMP)                \
-    macro(RUNMANUAL)                  \
-    macro(RUNTRAVEL)                \
-    macro(DUMPTANK)                 \
-    macro(DUMPINGTANK)              \
+    macro(RUNCAMP)                  \
+    macro(ENTERMANUAL)              \
+    macro(ENTERTRAVEL)              \
     macro(CALLIMITS)                \
     macro(CALLOW)                   \
     macro(CALWAITHIGH)              \
@@ -38,6 +36,11 @@
     macro(CALDONELED)               \
     macro(CALDONE)                  \
     macro(CALCOMPLETE)              \
+    macro(RUNMANUAL)                \
+    macro(STARTTRAVEL)              \
+    macro(RUNTRAVEL)                \
+    macro(LASTSTATE)
+
 
     
 enum states_t

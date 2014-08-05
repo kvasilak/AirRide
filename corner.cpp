@@ -36,7 +36,8 @@ CCorner::CCorner()://Position p):
   PulseTime(250),
   LimitLow(100),            // set limits to 100 from high and low
   LimitHigh(924),
-  LongFilter(false)
+  LongFilter(false),
+  IsAtHeight(false)
 {
 
 	LastTime 		= millis();
@@ -232,13 +233,23 @@ void CCorner::SetLongFilter(bool slow)
         {
             HeightAvg[i] = SmoothHeight;      
         }
-        
-        filter_reg = (SmoothHeight << FILTER_SHIFT);
     }
+    
+    //Always Reset IIR filter
+    filter_reg = (SmoothHeight << FILTER_SHIFT);
     
     LongFilter = slow;
 }
 
+void CCorner::AtHeight(bool at)
+{
+    IsAtHeight = at;
+}
+
+bool CCorner::AtHeight()
+{
+    IsAtHeight;
+}
 
 //Uses the low pass IIR filter described in "Simple Software Lowpass Filter.pdf"
 //And two simple FIR filters
@@ -392,6 +403,12 @@ void CCorner::Run(int32_t setpoint)
                         }
                     }
                 }
+                else
+                {
+                     //might not be perfectly at height, but should be pretty close
+                     IsAtHeight = true;
+                }
+
                 break;
             case FillPulse:
                 if(IsTimedOut(PulseTotal, PulseStart))
