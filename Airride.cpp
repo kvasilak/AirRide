@@ -37,7 +37,7 @@ CAirRide::CAirRide()
 
 void CAirRide::Init()
 {
-    //Serial.println("*******GMC Air Ride Controller V1.0*********");
+    Serial.println("AirRide,msg,GMC Air Ride Controller V1.0");
 
     SampleTime = millis();
 

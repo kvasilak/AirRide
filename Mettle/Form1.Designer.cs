@@ -28,13 +28,13 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend2 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series6 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series7 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series8 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series9 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series10 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series4 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series5 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             this.tabMain = new System.Windows.Forms.TabControl();
             this.tabChart = new System.Windows.Forms.TabPage();
@@ -103,6 +103,8 @@
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.stripStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.stripError = new System.Windows.Forms.ToolStripStatusLabel();
+            this.tagState27 = new MettleLib.TagState();
+            this.tagState28 = new MettleLib.TagState();
             this.tabMain.SuspendLayout();
             this.tabChart.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.tagChart1)).BeginInit();
@@ -129,6 +131,8 @@
             // tabChart
             // 
             this.tabChart.BackColor = System.Drawing.SystemColors.Control;
+            this.tabChart.Controls.Add(this.tagState28);
+            this.tabChart.Controls.Add(this.tagState27);
             this.tabChart.Controls.Add(this.tagText8);
             this.tabChart.Controls.Add(this.tagText7);
             this.tabChart.Controls.Add(this.tagText4);
@@ -305,11 +309,12 @@
             // 
             this.tagText5.AcceptsReturn = true;
             this.tagText5.AcceptsTab = true;
-            this.tagText5.Location = new System.Drawing.Point(539, 246);
+            this.tagText5.Location = new System.Drawing.Point(513, 246);
             this.tagText5.Module = "AirRide";
+            this.tagText5.Multiline = true;
             this.tagText5.Name = "tagText5";
-            this.tagText5.Size = new System.Drawing.Size(100, 20);
-            this.tagText5.Sort = "DumpTank";
+            this.tagText5.Size = new System.Drawing.Size(161, 120);
+            this.tagText5.Sort = "msg";
             this.tagText5.TabIndex = 63;
             // 
             // tagState21
@@ -861,51 +866,51 @@
             this.tagChart1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            chartArea2.AxisX.Maximum = 500D;
-            chartArea2.AxisX.Minimum = 0D;
-            chartArea2.AxisY.Interval = 10D;
-            chartArea2.AxisY.MajorGrid.Interval = 10D;
-            chartArea2.AxisY.MajorGrid.IntervalOffset = 0D;
-            chartArea2.AxisY.MajorTickMark.Enabled = false;
-            chartArea2.AxisY.Maximum = 50D;
-            chartArea2.AxisY.Minimum = -50D;
-            chartArea2.Name = "ChartArea1";
-            this.tagChart1.ChartAreas.Add(chartArea2);
-            legend2.Enabled = false;
-            legend2.Name = "Legend1";
-            this.tagChart1.Legends.Add(legend2);
+            chartArea1.AxisX.Maximum = 500D;
+            chartArea1.AxisX.Minimum = 0D;
+            chartArea1.AxisY.Interval = 10D;
+            chartArea1.AxisY.MajorGrid.Interval = 10D;
+            chartArea1.AxisY.MajorGrid.IntervalOffset = 0D;
+            chartArea1.AxisY.MajorTickMark.Enabled = false;
+            chartArea1.AxisY.Maximum = 50D;
+            chartArea1.AxisY.Minimum = -50D;
+            chartArea1.Name = "ChartArea1";
+            this.tagChart1.ChartAreas.Add(chartArea1);
+            legend1.Enabled = false;
+            legend1.Name = "Legend1";
+            this.tagChart1.Legends.Add(legend1);
             this.tagChart1.Location = new System.Drawing.Point(3, 372);
             this.tagChart1.Module = "Corner";
             this.tagChart1.Name = "tagChart1";
-            series6.ChartArea = "ChartArea1";
-            series6.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
-            series6.Color = System.Drawing.Color.Red;
-            series6.Legend = "Legend1";
-            series6.Name = "LError";
-            series7.ChartArea = "ChartArea1";
-            series7.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
-            series7.Color = System.Drawing.Color.Blue;
-            series7.Legend = "Legend1";
-            series7.Name = "RError";
-            series8.ChartArea = "ChartArea1";
-            series8.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
-            series8.Legend = "Legend1";
-            series8.Name = "ZAxis";
-            series9.ChartArea = "ChartArea1";
-            series9.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
-            series9.Color = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(0)))));
-            series9.Legend = "Legend1";
-            series9.Name = "LeftSlow";
-            series10.ChartArea = "ChartArea1";
-            series10.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
-            series10.Color = System.Drawing.Color.Green;
-            series10.Legend = "Legend1";
-            series10.Name = "RightSlow";
-            this.tagChart1.Series.Add(series6);
-            this.tagChart1.Series.Add(series7);
-            this.tagChart1.Series.Add(series8);
-            this.tagChart1.Series.Add(series9);
-            this.tagChart1.Series.Add(series10);
+            series1.ChartArea = "ChartArea1";
+            series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
+            series1.Color = System.Drawing.Color.Red;
+            series1.Legend = "Legend1";
+            series1.Name = "LError";
+            series2.ChartArea = "ChartArea1";
+            series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
+            series2.Color = System.Drawing.Color.Blue;
+            series2.Legend = "Legend1";
+            series2.Name = "RError";
+            series3.ChartArea = "ChartArea1";
+            series3.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
+            series3.Legend = "Legend1";
+            series3.Name = "ZAxis";
+            series4.ChartArea = "ChartArea1";
+            series4.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
+            series4.Color = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(0)))));
+            series4.Legend = "Legend1";
+            series4.Name = "LeftSlow";
+            series5.ChartArea = "ChartArea1";
+            series5.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
+            series5.Color = System.Drawing.Color.Green;
+            series5.Legend = "Legend1";
+            series5.Name = "RightSlow";
+            this.tagChart1.Series.Add(series1);
+            this.tagChart1.Series.Add(series2);
+            this.tagChart1.Series.Add(series3);
+            this.tagChart1.Series.Add(series4);
+            this.tagChart1.Series.Add(series5);
             this.tagChart1.Size = new System.Drawing.Size(1152, 141);
             this.tagChart1.TabIndex = 16;
             this.tagChart1.Text = "tagChart1";
@@ -1394,6 +1399,32 @@
             this.stripError.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.stripError.ToolTipText = "Application errors";
             // 
+            // tagState27
+            // 
+            this.tagState27.Checked = false;
+            this.tagState27.Location = new System.Drawing.Point(733, 48);
+            this.tagState27.Module = "AirRide";
+            this.tagState27.Name = "tagState27";
+            this.tagState27.Size = new System.Drawing.Size(103, 23);
+            this.tagState27.Sort = "MainState";
+            this.tagState27.State = "STARTTRAVEL";
+            this.tagState27.TabIndex = 74;
+            this.tagState27.Tag = "";
+            this.tagState27.Text = "STARTTRAVEL";
+            // 
+            // tagState28
+            // 
+            this.tagState28.Checked = false;
+            this.tagState28.Location = new System.Drawing.Point(733, 16);
+            this.tagState28.Module = "AirRide";
+            this.tagState28.Name = "tagState28";
+            this.tagState28.Size = new System.Drawing.Size(103, 23);
+            this.tagState28.Sort = "MainState";
+            this.tagState28.State = "STARTMANUAL";
+            this.tagState28.TabIndex = 75;
+            this.tagState28.Tag = "";
+            this.tagState28.Text = "STARTMANUAL";
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1494,6 +1525,8 @@
         private MettleLib.TagText tagText3;
         private MettleLib.TagText tagText8;
         private MettleLib.TagText tagText7;
+        private MettleLib.TagState tagState28;
+        private MettleLib.TagState tagState27;
     }
 }
 

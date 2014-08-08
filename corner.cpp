@@ -248,7 +248,7 @@ void CCorner::AtHeight(bool at)
 
 bool CCorner::AtHeight()
 {
-    IsAtHeight;
+    return IsAtHeight;
 }
 
 //Uses the low pass IIR filter described in "Simple Software Lowpass Filter.pdf"
