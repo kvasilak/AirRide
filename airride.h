@@ -50,16 +50,9 @@ class CAirRide
     CCorner CornerR;
     CEEprom EEProm;
 
-    //const int PinTilt;
-    //const int PinDumpTank;
-    //const int Mode1;
-    //const int Mode2;
-    //const int CalPin;
-
     states_t state;
 
     uint32_t SampleTime;    
-    uint32_t CalDoneTime;
 
     //the height valuse that will level the coach to the horizon
     //when camping
@@ -71,8 +64,8 @@ class CAirRide
     int16_t RRheight;
     int16_t SetPoint;
     int16_t Tilt;
-    int16_t LeftHeight;
-    int16_t RightHeight;
+    //int16_t LeftHeight;
+    //int16_t RightHeight;
     int16_t LeftAuto;
     int16_t RightAuto;
     
@@ -90,6 +83,7 @@ class CAirRide
     uint32_t timeout;
     uint32_t LeftMinTime;
     uint32_t RightMinTime;
+    uint32_t MoveTimeOut;
     int OldLeft;
     int OldRight;
 };

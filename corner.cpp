@@ -82,6 +82,10 @@ void CCorner::Init(Position p)
     corner = p;
     SlowAt = 0;
     SmoothAt = 0;
+    
+    HeightSpeed = 0;
+    OldHeight = height;
+    SpeedTime = millis();
 }
 void CCorner::Limits(int16_t Low, int16_t high)
 {
@@ -92,7 +96,7 @@ void CCorner::Limits(int16_t Low, int16_t high)
 //Get the height of this corner
 int32_t CCorner::GetHeight()
 {
-    int height=0;
+    int32_t height=0;
     
     switch(corner)
    {
@@ -103,6 +107,22 @@ int32_t CCorner::GetHeight()
             height = (int32_t)analogRead(PINRRHEIGHT);
             break;
    }   
+   
+   //calculate speed, counts/second
+   if(IsTimedOut(1000, SpeedTime))
+   {
+        if(height > OldHeight)
+        {
+            HeightSpeed = height - OldHeight;
+        }
+        else
+        {
+            HeightSpeed = OldHeight - height;
+        }
+        
+        OldHeight = height;
+        SpeedTime = millis();
+   }
    
    return height;
 }
@@ -253,22 +273,8 @@ bool CCorner::AtHeight()
 
 //Uses the low pass IIR filter described in "Simple Software Lowpass Filter.pdf"
 //And two simple FIR filters
-void CCorner::Run(int32_t setpoint)
-{		
-	int32_t height 			= GetHeight();
-    int i;
-    
-    //prevent setpoint from exceeding cal limits
-/*     if(setpoint > LimitHigh)
-    {
-        setpoint = LimitHigh;
-    }
-    
-    if(setpoint < LimitLow) 
-    {
-        setpoint = LimitLow;
-    } */
-
+void CCorner::DoHeight(int32_t height, int32_t setpoint)
+{
 	//sample Slowly
 	if(IsTimedOut(CycleTime, LastTime) )
 	{        
@@ -323,127 +329,171 @@ void CCorner::Run(int32_t setpoint)
            } 
            UpdateTime = millis();
         }
-        
-
-
-        switch (State)
-        {
-            case Initing:
-                Fill(Closed);
-                Dump(Closed);
-                SetState(Holding);
-                //filter_reg = (height << FILTER_SHIFT);
-                HoldOffTime = millis();
-                break;
-            case HoldEntry:
-                if(IsTimedOut(1000, HoldOffTime))
-                {
-                    //Over ride the filter, force it to the current value
-                    //So the hold state doesn't keep changing
-                    filter_reg = (height << FILTER_SHIFT);
-                    
-                    for(i=0; i<100; i++)
-                    {
-                        HeightAvg[i] = height;      
-                    }
-    
-                    HoldOffTime = millis();
-                    DoPulse = false;
-                    CycleTime = 100;
-                    SetState(Holding);
-                }
-                break;
-            case Holding:
-                //react slowly if already within deadband
-                
-                //below setpoint
-                if( slowheight < (setpoint - DeadBand))
-                {
-                    //minimum hold time so we don't go crazy hunting
-                    if(IsTimedOut(5000, HoldOffTime))
-                    {
-                        SetState(Filling);
-                        Fill(Open);
-                        CycleTime = 100;
-                        
-                        //if within 5x deadband, only pulse the valve
-                        //so we don't over shoot the setpoint due to the long lag time
-                        
-                        if(height > (setpoint -(DeadBand * 5)) )
-                        {                        
-                            //calc total pulse time as a multiple of deadbands from setpoint
-                            //we know height < setpoint or we wouldn't be here
-                            PulseTotal =(abs(setpoint - height) / DeadBand) * PulseTime; // pulsetime = 250ms
-                            PulseStart = millis();
-
-                            SetState(FillPulse);
-                        }
-                    }
-                }
-                else if(slowheight > (setpoint + DeadBand)) //>524
-                {
-                    if(IsTimedOut(5000, HoldOffTime))
-                    {
-                        SetState(Dumping);
-                        Dump(Open);
-                        
-                        CycleTime = 100;
-                        
-                        //if within 5x deadband, only pulse the valve
-                        //so we don't over shoot the setpoint due to the long lag time
-                        
-                        if(height < setpoint + (DeadBand * 5))
-                        {                        
-                            //calc total pulse time as a multiple of deadbands from setpoint
-                            //we know height > setpoint or we wouldn't be here
-                            PulseTotal = (abs(height - setpoint) / DeadBand) * PulseTime; // pulsetime = 250ms
-                            PulseStart = millis();
-
-                            SetState(DumpPulse);
-                        }
-                    }
-                }
-                else
-                {
-                     //might not be perfectly at height, but should be pretty close
-                     IsAtHeight = true;
-                }
-
-                break;
-            case FillPulse:
-                if(IsTimedOut(PulseTotal, PulseStart))
-                {
-                    FillExit();
-                }
-                break;
-            case Filling:
-                if(height >= (setpoint-DeadBand))
-                {    
-                    FillExit();
-                }
-                break;
-            case DumpPulse:
-                if(IsTimedOut(PulseTotal, PulseStart))
-                {
-                    DumpExit();
-                }
-                break;
-            case Dumping:
-                if(height <= (setpoint + DeadBand))
-                {    
-                    DumpExit();
-                }
-                break;
-
-            default:
-                Serial.println(">Corner,Default,State!!<");
-                Fill(Closed);
-                Dump(Closed);
-                SetState(HoldEntry);
-                HoldOffTime = millis();
-        }
     }
 }
+
+
+
+void CCorner::Run(int32_t setpoint)
+{		
+    int i;
+    int32_t height 			= GetHeight();
+    
+    //prevent setpoint from exceeding cal limits
+    if(setpoint > LimitHigh)
+    {
+        setpoint = LimitHigh;
+    }
+    else if(setpoint < LimitLow) 
+    {
+        setpoint = LimitLow;
+    } 
+    
+    DoHeight(height, setpoint);
+
+    switch (State)
+    {
+        case Initing:
+            Fill(Closed);
+            Dump(Closed);
+            SetState(Holding);
+            //filter_reg = (height << FILTER_SHIFT);
+            HoldOffTime = millis();
+            break;
+        case HoldEntry:
+            if(IsTimedOut(1000, HoldOffTime))
+            {
+                //Over ride the filter, force it to the current value
+                //So the hold state doesn't keep changing
+                filter_reg = (height << FILTER_SHIFT);
+                
+                for(i=0; i<100; i++)
+                {
+                    HeightAvg[i] = height;      
+                }
+
+                HoldOffTime = millis();
+                DoPulse = false;
+                CycleTime = 100;
+                SetState(Holding);
+            }
+            break;
+        case Holding:
+            //react slowly if already within deadband
+            
+            //below setpoint
+            if( slowheight < (setpoint - DeadBand))
+            {
+                //minimum hold time so we don't go crazy hunting
+                //except in manual mode, react fast!
+                if(!LongFilter || IsTimedOut(5000, HoldOffTime))
+                {
+                    SetState(Filling);
+                    Fill(Open);
+                    CycleTime = 100;
+                    
+                    //if within 5x deadband, only pulse the valve
+                    //so we don't over shoot the setpoint due to the long lag time
+                    
+                    if(height > (setpoint -(DeadBand * 5)) )
+                    {                        
+                        //calc total pulse time as a multiple of deadbands from setpoint
+                        //we know height < setpoint or we wouldn't be here
+                        PulseTotal =(abs(setpoint - height) / DeadBand) * PulseTime; // pulsetime = 250ms
+                        PulseStart = millis();
+
+                        SetState(FillPulse);
+                    }
+                }
+            }
+            else if(slowheight > (setpoint + DeadBand)) //>524
+            {
+                if(!LongFilter || IsTimedOut(5000, HoldOffTime))
+                {
+                    SetState(Dumping);
+                    Dump(Open);
+                    
+                    CycleTime = 100;
+                    
+                    //if within 5x deadband, only pulse the valve
+                    //so we don't over shoot the setpoint due to the long lag time
+                    
+                    if(height < setpoint + (DeadBand * 5))
+                    {                        
+                        //calc total pulse time as a multiple of deadbands from setpoint
+                        //we know height > setpoint or we wouldn't be here
+                        PulseTotal = (abs(height - setpoint) / DeadBand) * PulseTime; // pulsetime = 250ms
+                        PulseStart = millis();
+
+                        SetState(DumpPulse);
+                    }
+                }
+            }
+            else
+            {
+                 //might not be perfectly at height, but should be pretty close
+                 IsAtHeight = true;
+            }
+
+            break;
+        case FillPulse:
+            if(IsTimedOut(PulseTotal, PulseStart))
+            {
+                FillExit();
+            }
+            break;
+        case Filling:
+            if(height >= (setpoint-DeadBand))
+            {    
+                FillExit();
+            }
+            break;
+        case DumpPulse:
+            if(IsTimedOut(PulseTotal, PulseStart))
+            {
+                DumpExit();
+            }
+            break;
+        case Dumping:
+            if(height <= (setpoint + DeadBand))
+            {    
+                DumpExit();
+            }
+            break;
+
+        default:
+            //Serial.println(">Corner,Default,State!!<");
+            Fill(Closed);
+            Dump(Closed);
+            SetState(HoldEntry);
+            HoldOffTime = millis();
+    }
+}
+
+//used to calibrate height limits.
+//the coach may not have travel from 0 to 1024
+//wait for both heights to be all the way down
+//determined by the height changing less that 2 counts in 1 second
+//Waits 10 seconds for the cases where it is slow to start or stop moving
+bool CCorner::IsMoving()
+{
+    bool ret = true;
+
+    //Serial.print(">AirRide,msg,speed; ");
+    //Serial.print(HeightSpeed);
+    //Serial.println("<");
+    
+    if(HeightSpeed > 1)
+    {
+        ret =  true;
+    }
+    else
+    {
+        ret =  false;
+    }
+    return ret;
+}
+
 
 
 

@@ -39,6 +39,8 @@
     macro(RUNMANUAL)                \
     macro(STARTTRAVEL)              \
     macro(RUNTRAVEL)                \
+    macro(CALTRAVEL)                \
+    macro(CALTRAVELDONE)            \
     macro(LASTSTATE)
 
 

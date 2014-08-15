@@ -129,6 +129,8 @@ void CEEprom::SaveLimits(int16_t leftlow, int16_t lefthigh, int16_t rightlow, in
     SaveInt(RightHightAddr, righthigh);
 }
 
+//low byte into address
+//hi byte into address +1
 void CEEprom::SaveInt(int address, int16_t v)
 {
     EEPROM.write(address, (v & 0xFF));
@@ -140,7 +142,7 @@ int16_t CEEprom::ReadInt(int address)
 {
     int16_t val = EEPROM.read(address);
     
-    val + EEPROM.read(address+1) << 8;
+    int16_t valh = (EEPROM.read(address+1) << 8);
     
-    return val;
+    return valh + val;;
 }

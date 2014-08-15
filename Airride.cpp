@@ -26,8 +26,6 @@
 #include "airride.h"
 
 
-//#define MODULE "AirRide"
-
 static char MODULE[] = {"AirRide"};
 static char CALSTATE[] = {"CalState"};
 
@@ -37,7 +35,7 @@ CAirRide::CAirRide()
 
 void CAirRide::Init()
 {
-    Serial.println("AirRide,msg,GMC Air Ride Controller V1.0");
+    Serial.println(">AirRide,msg,GMC Air Ride Controller V1.0<");
 
     SampleTime = millis();
 
@@ -52,12 +50,29 @@ void CAirRide::Init()
     
     EEProm.GetLimits(&LeftLowLimit, &LeftHighLimit, &RightLowLimit, &RightHighLimit);
     
-    //TODO read from EEPROM also
-    LTravelHeight = 642;//GetLeftTravel();
-    RTravelHeight = 698;//GetRightTravel();
+    //debug, force travel height to known value
+    //EEProm.SaveLeftTravel(642); 
+    //EEProm.SaveRightTravel(698);
+
+    LTravelHeight = EEProm.GetLeftTravel(); //642
+    RTravelHeight = EEProm.GetRightTravel(); //698
    
     CornerL.Limits(LeftLowLimit, LeftHighLimit);
     CornerR.Limits(RightLowLimit, RightHighLimit);
+    
+    Serial.print(">AirRide,msg,limts (Lt, Rt, Ll Lh,Rl Rh) ");
+    Serial.print(LTravelHeight);
+    Serial.print(",");
+    Serial.print(RTravelHeight);
+    Serial.print(",");
+    Serial.print(LeftLowLimit);
+    Serial.print(",");
+    Serial.print(LeftHighLimit);
+    Serial.print(",");
+    Serial.print(RightLowLimit);
+    Serial.print(",");
+    Serial.print(RightHighLimit);
+    Serial.println("<");
     
     CheckEvents();
   
@@ -80,7 +95,7 @@ void CAirRide::SetState(states_t s)
 void CAirRide::CaclulateLevel()
 {
 //todo...implement it!
-//handle not enough suspesion rage issues
+//handle not enough suspension range issues
 //handle travel limits, ranges stored in EEPROM
     LeftLevel = 512;
     RightLevel = 512;
@@ -99,7 +114,8 @@ bool CAirRide::Calibrate()
     bool docal = false;
     static uint32_t pressstart;
     
-    //N.O. switch
+    //N.c. switch
+    //goes high when pressed, true == HIGH == Pressed
     bool pressed = (HIGH == digitalRead(PINCAL));
    
    //Log(MODULE, "CalButton", digitalRead(PINCAL));
@@ -192,6 +208,7 @@ void CAirRide::CheckEvents()
     {
         //only switch states if in these states;
         case RUNTRAVEL:
+        case STARTTRAVEL:
             switch(mode)
             {
                 case MANUALMODE:
@@ -201,12 +218,25 @@ void CAirRide::CheckEvents()
                 break;
                 //No mode change
                 case TRAVELMODE:
-                //run the state machine to find the suspension high and low limits
                 if(Calibrate())
                 {
-                    SetState(CALLIMITS);
+                    //Set limits to full range so cal can find the new limits
+                    //CornerL.Limits(0, 1024);
+                    //CornerR.Limits(0, 1024);
+            
+                    //SetState(CALLIMITS);
+                    
+                    //stop managing height so user can set height manually with remote
+                    SetState(CALTRAVEL);
+                    MoveTimeOut = millis();
                 }
                 break;
+            }
+            break;
+        case CALTRAVEL:
+            if(Calibrate())
+            {
+                SetState(CALTRAVELDONE);
             }
             break;
         case RUNMANUAL:
@@ -219,12 +249,15 @@ void CAirRide::CheckEvents()
                 SetState((states_t)mode);
                 break;
                 case MANUALMODE:
-                //save the current height as the travel height
+                //find the high and low travel limits
                 if(Calibrate())
                 {
-                    EEProm.SaveLeftTravel(LeftHeight); 
-                    EEProm.SaveRightTravel(RightHeight);
-                    SetState(CALDONELED);
+                    CornerL.Limits(0, 1024);
+                    CornerR.Limits(0, 1024);
+            
+                    SetState(CALLIMITS);
+                                       
+                    //SetState(CALDONELED);
                 }
                 break;
             }
@@ -271,6 +304,7 @@ void CAirRide::CheckEvents()
         break; 
         //now back to our current mode
         case CALCOMPLETE:
+        case CALTRAVELDONE:
             switch(mode)
             {
                 case TRAVELMODE:
@@ -284,172 +318,7 @@ void CAirRide::CheckEvents()
     }   
 }
 
-//used to calibrate height limits.
-//the coach may not have travel from 0 to 1024
-//wait for both heights to be all the way down
-//determined by the height changing less that 2 counts in 1 second
-//Waits 10 seconds for the cases where it is slow to start or stop moving
-bool CAirRide::AllDown(int *oldleft, int *oldright, int left, int right)
-{
-    bool leftdown = false;
-    bool rightdown = false;
-    bool alldown = false;
-    
-    //sample height change once a second
-    if(IsTimedOut(1000, timeout))
-    {
-        //less than 2 counts in 1 second means we're all the way down
-        if(*oldleft - left <= 2)
-        {
-            //no change for 10 seconds
-            if(IsTimedOut(10000, LeftMinTime))
-            {
-                leftdown = true;
-            }
-        }
-        else
-        {
-            LeftMinTime = millis();
-        }
-        
-        if(*oldright - right <= 2)
-        {
-            if(IsTimedOut(10000, RightMinTime))
-            {
-                rightdown = true;
-            }
-        }
-        else
-        {
-            RightMinTime = millis();
-        }
 
-        //reset timer for another second
-        timeout = millis();
-        
-        //don't update once we stop moving
-        if(!leftdown)
-        {
-            *oldleft = left;
-        }
-        
-        if(!rightdown)
-        {
-            *oldright = right;
-        }
-    }
-
-    if(leftdown && rightdown)
-    {
-        //both heights stopped moving for at least 10 seconds
-        alldown = true;
-        LeftLowLimit = left;
-        RightLowLimit = right;
-    }
-
-    return alldown;
-}
-
-
-//Wait for the car to start rising
-bool CAirRide::IsRising(int *oldleft, int *oldright, int left, int right)
-{
-    bool leftmoved = false; 
-    bool rightmoved = false;
-    bool allmoved = false;
-    
-    if(IsTimedOut(1000, timeout))
-    {
-        //wait for car to go up 10 counts
-        if(*oldleft - left > 10)
-        {
-            leftmoved = true;
-        }
-        
-        if(*oldright - right > 10)
-        {
-            rightmoved = true;
-        }
-        
-        //don't update once we start moving
-        if(!leftmoved)
-        {
-            *oldleft = left;
-        }
-        
-        if(!rightmoved)
-        {
-            *oldright = right;
-        }
-    }
-    
-    if(leftmoved && rightmoved)
-    {
-        //both heights stopped moving for at least 10 seconds
-        allmoved = true;
-    }
-
-    return allmoved;
-}
-
-//see all down comments
-bool CAirRide::AllUp(int *oldleft, int *oldright, int left, int right)
-{ 
-    bool leftup = false;
-    bool rightup = false;
-    bool allup = false;
-    
-    if(IsTimedOut(1000, timeout))
-    {
-        //less than 2 counts in 1 second means we're all the way down
-        if(*oldleft - left < 2)
-        {
-            //no change for 10 seconds
-            if(IsTimedOut(10000, LeftMinTime))
-            {
-                leftup = true;
-            } 
-        }
-        
-        if(*oldright - right < 2)
-        {
-            //no change for 10 seconds
-            if(IsTimedOut(10000, RightMinTime))
-            {
-                rightup = true;
-            } 
-        }
-        
-        //both heights stopped moving and we have waited at least 10 seconds
-        if(leftup && rightup)
-        {
-            allup = true;
-        }
-        
-        timeout = millis();
-        
-        if(!leftup)
-        {
-            *oldleft = left;
-        }
-        
-        if(!rightup)
-        {
-            *oldright = right;
-        }
-    }
-    
-    if(leftup && rightup)
-    {
-        //both heights stopped moving for at least 10 seconds
-        allup = true;
-        LeftHighLimit = left;
-        RightHighLimit = right;
-    }
-    
-    
-    return allup;
-}
 
 //turn on Cal LED
 void CAirRide::CalLED( bool on)
@@ -457,13 +326,13 @@ void CAirRide::CalLED( bool on)
     if(on)
     {
         //make output and turn on LED
-   //     pinMode(PINCAL, OUTPUT);
-   //     digitalWrite(PINCAL, HIGH);
+        pinMode(PINCAL, OUTPUT);
+        digitalWrite(PINCAL, HIGH);
     }
     else
     {
-   //     digitalWrite(PINCAL, LOW);
-   //     pinMode(PINCAL, INPUT_PULLUP);
+        digitalWrite(PINCAL, LOW);
+        pinMode(PINCAL, INPUT_PULLUP);
         
     }
 }
@@ -554,56 +423,112 @@ void CAirRide::Run()
         //raise and lower the coach to find the upper and lower limits of travel 
         //must be in travelmode before pressing cal button
         case CALLIMITS:
-            //turn on Cel LED at start of calibration cycle
-            CalLED(true);
+            CornerL.Run(0);  
+            CornerR.Run(0);
             
-            CornerL.Dump(Open);
-            CornerL.Dump(Open);
-            
-            timeout = millis();
-            LeftMinTime = millis();
-            RightMinTime = millis();
-            OldLeft = LRheight;
-            OldRight = RRheight;
-    
-            SetState(CALLOW);
+            if(CornerL.GetHeight() > 200)
+            {
+                if(CornerL.IsMoving() || CornerR.IsMoving() )
+                {
+                    MoveTimeOut = millis();
+                    
+                    SetState(CALLOW);
+                }
+                else
+                {
+                    //wait 10 seconds if no movement cancel calibration
+                    if(true == IsTimedOut(10000, MoveTimeOut) )
+                    {
+                        Log(MODULE, "msg", "Cal failed to Lower");      
+                        MoveTimeOut = millis();
+                        
+                        //SetState(CALDONELED);
+                    }
+                }
+            }
+            else //we may be all the way down already
+            {
+                MoveTimeOut = millis();
+                    
+                SetState(CALLOW);
+            }
             break;
         case CALLOW:
+            CornerL.Run(0);  
+            CornerR.Run(0);
+            
             //wait for car to be all the way down
-            if(AllDown(&OldLeft, &OldRight, LRheight, RRheight))
+            if(CornerL.IsMoving() || CornerR.IsMoving())
             {
-                CornerL.Dump(Closed);
-                CornerL.Dump(Closed);
-                CornerL.Fill(Open);     
-                CornerR.Fill(Open);
-                
-                timeout = millis();
-                LeftMinTime = millis();
-                RightMinTime = millis();
-                OldLeft = LRheight;
-                OldRight = RRheight;
-                SetState(CALWAITHIGH);
+                //keep resetting timeout until both corners stop moving
+                MoveTimeOut = millis();
+            }
+            else
+            {
+                    //wait 10 seconds to see if we get any more movement
+                if(IsTimedOut(10000, MoveTimeOut))
+                {
+                    Log(MODULE, "msg", "All Down");      
+                    MoveTimeOut = millis();
+                    
+                    LeftLowLimit = CornerL.GetHeight();
+                    RightLowLimit = CornerR.GetHeight();
+                    
+                    Log(MODULE,"msg,Left low cal; ", LeftLowLimit);
+                    Log(MODULE,"msg,Right low cal; ", RightLowLimit);
+                    
+                    SetState(CALWAITHIGH);
+                }
+
             }
             break;
         case CALWAITHIGH:
+            CornerL.Run(1024);  
+            CornerR.Run(1024);
+            
             //wait for the car to start rising
-            if(IsRising(&OldLeft, &OldRight, LRheight, RRheight))
+            if(CornerL.IsMoving() || CornerR.IsMoving() )   
             {
-                timeout = millis();
-                LeftMinTime = millis();
-                RightMinTime = millis();
-                OldLeft = LRheight;
-                OldRight = RRheight;
+                MoveTimeOut = millis();
+                
                 SetState(CALHIGH);
+            }
+            else
+            {
+                //wait 10 seconds if no movement cancel calibration
+                if(IsTimedOut(20000, MoveTimeOut))
+                {
+                    Log(MODULE, "msg", "Cal failed to rise");      
+                    MoveTimeOut = millis();
+                    
+                    SetState(CALDONELED);
+                }
             }
             break;
         case CALHIGH:
-            if(AllUp(&OldLeft, &OldRight, LRheight, RRheight))
+            CornerL.Run(1024);  
+            CornerR.Run(1024);
+            
+            if(CornerL.IsMoving() || CornerR.IsMoving() )
             {
-                CornerL.Fill(Closed);     
-                CornerR.Fill(Closed);
-                
-                SetState(CALSAVELIMITS);
+                MoveTimeOut = millis();
+            }
+            else
+            {
+                //wait 10 seconds to see if we get any more movement
+                if(IsTimedOut(20000, MoveTimeOut) )
+                {
+                    Log(MODULE, "msg", "All up");      
+                    MoveTimeOut = millis();
+                    
+                    LeftHighLimit = CornerL.GetHeight();
+                    RightHighLimit = CornerR.GetHeight();
+                    
+                    Log(MODULE,"msg,Left hi cal; ", LeftHighLimit);
+                    Log(MODULE,"msg,Right hi cal; ", RightHighLimit);
+                    
+                    SetState(CALSAVELIMITS);
+                }
             }
             break;
         case CALSAVELIMITS:
@@ -620,13 +545,31 @@ void CAirRide::Run()
             SetState(CALDONE);
             break;
         case CALDONE:
-            if(IsTimedOut(1000, CalDoneTime))
+            if(IsTimedOut(1000, MoveTimeOut))
             {
                 CalLED(false);
                 SetState(CALCOMPLETE);
             }
             break;
         case CALCOMPLETE:
+            break;
+            
+        case CALTRAVEL:
+            //dont adjust height, let the user adjust the height with the remote
+            CornerL.DoHeight(CornerL.GetHeight(), 512);
+            CornerR.DoHeight(CornerR.GetHeight(), 512);
+            break;
+        case CALTRAVELDONE:
+            //save heights
+            //return to where we were
+            LTravelHeight = CornerL.GetHeight(); 
+            RTravelHeight = CornerR.GetHeight(); 
+    
+            EEProm.SaveLeftTravel(LTravelHeight); 
+            EEProm.SaveRightTravel(RTravelHeight);
+                    
+            Log(MODULE,"msg,Left Travel Height; ", LTravelHeight);
+            Log(MODULE,"msg,Right Travel Height; ", RTravelHeight);
             break;
         default:
             SetState(RUNMANUAL);

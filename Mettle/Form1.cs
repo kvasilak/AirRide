@@ -270,5 +270,15 @@ namespace Mettle
             txtTagData.Clear();
         }
 
+        private void tagText5_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label10_Click(object sender, EventArgs e)
+        {
+
+        }
+
     }
 }
