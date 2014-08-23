@@ -28,7 +28,7 @@ need to predict movement or use shorter bursts to sneak up on height
 #define INCLUDE_CORNER_H
 
 #include <stdint.h>
-#include "debug.h"
+#include "common.h"
 
 enum Position { 
         LeftFront, 

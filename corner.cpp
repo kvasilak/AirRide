@@ -22,7 +22,6 @@
 #include <Arduino.h>
 #include <stdint.h>
 #include "corner.h"
-#include "debug.h"
 #include "common.h"
 
 
@@ -160,10 +159,10 @@ void CCorner::PrintCorner()
     switch(corner)
    {
         case LeftRear:
-            Serial.print("Left,");
+            Serial.print(F("Left,"));
             break;
         case RightRear:
-            Serial.print("Right,");
+            Serial.print(F("Right,"));
             break;
    } 
 }
@@ -174,10 +173,10 @@ void CCorner::SetState(ValveOp s)
     
     static char *StateStrs[] = {VALVE_STATES_LIST(STRINGIFY)};
 
-    Serial.print(">Corner,");
+    Serial.print(F(">Corner,"));
     PrintCorner();
     Serial.print(StateStrs[s]);
-    Serial.println("<");
+    Serial.println(F("<"));
     
     if(laststate != s)
     {
@@ -317,14 +316,32 @@ void CCorner::DoHeight(int32_t height, int32_t setpoint)
            switch(corner)
            {
                 case LeftRear:
-                    Log("Corner", "LError", height - setpoint);
-                    Log("Corner", "LeftHeight", height);
-                    Log("Corner", "LeftSlow", slowheight - setpoint);
+                    Serial.print(F(">Corner, LError"));
+                    Serial.print(height - setpoint);
+                    Serial.println(F("<"));
+
+                    Serial.print(F(">Corner, LeftHeight"));
+                    Serial.print(height);
+                    Serial.println(F("<"));
+
+                    Serial.print(F(">Corner, LeftSlow"));
+                    Serial.print(slowheight - setpoint);
+                    Serial.println(F("<"));
+
                     break;
                 case RightRear:
-                    Log("Corner", "RError", height - setpoint);
-                    Log("Corner", "RightHeight", height);
-                    Log("Corner", "RightSlow", slowheight - setpoint);
+                    Serial.print(F(">Corner, RError"));
+                    Serial.print(height - setpoint);
+                    Serial.println(F("<"));
+
+                    Serial.print(F(">Corner, RightHeight"));
+                    Serial.print(height);
+                    Serial.println(F("<"));
+
+                    Serial.print(F(">Corner, RightSlow"));
+                    Serial.print(slowheight - setpoint);
+                    Serial.println(F("<"));                
+
                     break;
            } 
            UpdateTime = millis();

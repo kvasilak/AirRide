@@ -20,14 +20,9 @@
 **************************************************************************/
 #include <Arduino.h>
 #include "corner.h"
-#include "debug.h"
 #include "common.h"
 #include "gmceeprom.h"
 #include "airride.h"
-
-
-static char MODULE[] = {"AirRide"};
-static char CALSTATE[] = {"CalState"};
 
 CAirRide::CAirRide()
 {
@@ -35,7 +30,7 @@ CAirRide::CAirRide()
 
 void CAirRide::Init()
 {
-    Serial.println(">AirRide,msg,GMC Air Ride Controller V1.0<");
+    Serial.println(F(">AirRide,msg,GMC Air Ride Controller V1.0<"));
 
     SampleTime = millis();
 
@@ -60,19 +55,19 @@ void CAirRide::Init()
     CornerL.Limits(LeftLowLimit, LeftHighLimit);
     CornerR.Limits(RightLowLimit, RightHighLimit);
     
-    Serial.print(">AirRide,msg,limts (Lt, Rt, Ll Lh,Rl Rh) ");
+    Serial.print(F(">AirRide,msg,limts (Lt, Rt, Ll Lh,Rl Rh) "));
     Serial.print(LTravelHeight);
-    Serial.print(",");
+    Serial.print(F(","));
     Serial.print(RTravelHeight);
-    Serial.print(",");
+    Serial.print(F(","));
     Serial.print(LeftLowLimit);
-    Serial.print(",");
+    Serial.print(F(","));
     Serial.print(LeftHighLimit);
-    Serial.print(",");
+    Serial.print(F(","));
     Serial.print(RightLowLimit);
-    Serial.print(",");
+    Serial.print(F(","));
     Serial.print(RightHighLimit);
-    Serial.println("<");
+    Serial.println(F("<"));
     
     CheckEvents();
   
@@ -81,11 +76,14 @@ void CAirRide::Init()
 void CAirRide::SetState(states_t s)
 {
     static states_t laststate = LASTSTATE;
-    static char *statestrs[] = {STATES_LIST(STRINGIFY)};
+    static const char *statestrs[] = {STATES_LIST(STRINGIFY)};
     
     if(s != laststate)
     {
-        Log(MODULE, "MainState", statestrs[s]);
+        Serial.print(F("AirRide,MainState,"));
+        Serial.print(statestrs[s]);
+        Serial.println(F("<"));
+        //Log(MODULE, "MainState", statestrs[s]);
         laststate = s;
     }
     state = s;
@@ -117,16 +115,14 @@ bool CAirRide::Calibrate()
     //N.c. switch
     //goes high when pressed, true == HIGH == Pressed
     bool pressed = (HIGH == digitalRead(PINCAL));
-   
-   //Log(MODULE, "CalButton", digitalRead(PINCAL));
-    
+     
     switch(calstate)
     {
         case 0: 
             //don't start timer until button is not pressed
             if(!pressed)
             {
-                Log(MODULE, CALSTATE, "NotPressed");
+                Serial.println(F(">AirRide, CalState, NotPressed<"));
                 pressstart = millis();
                 calstate++;
             }
@@ -137,7 +133,7 @@ bool CAirRide::Calibrate()
                 //don't press button for 5 seconds
                 if(IsTimedOut(5000, pressstart))
                 {
-                    Log(MODULE, CALSTATE, "Pressed");
+                    Serial.println(F(">AirRide, CalState, Pressed<"));
                     //Button un pressed long enough!
                     //Now wait another 5 seconds
                     pressstart = millis();
@@ -145,7 +141,7 @@ bool CAirRide::Calibrate()
                 }
                 else //button pressed too soon, restart timer
                 {
-                    Log(MODULE, CALSTATE, "Released");
+                    Serial.println(F(">AirRide, CalState, Released<"));
                     
                     pressstart = millis();
                     calstate = 0;
@@ -158,7 +154,7 @@ bool CAirRide::Calibrate()
                 //Hold button down for 5 seconds
                 if(IsTimedOut(5000, pressstart))
                 {
-                    Log(MODULE, CALSTATE, "Calibrate");
+                    Serial.println(F(">AirRide, CalState, Calibrate<"));
                     //user completed the magic sequence, calibrate!
                     docal = true;
                     calstate=0;
@@ -183,7 +179,7 @@ bool CAirRide::Calibrate()
 void CAirRide::GetMode()
 {
     static modes_t LastMode = CAMPMODE;//should always be different the first test
-    static char *states[] = {MODES_LIST(STRINGIFY)};
+    static const    char *states[] = {MODES_LIST(STRINGIFY)};
 
     int m = digitalRead(PINMODE1);
     m |= digitalRead(PINMODE2) <<1;
@@ -192,7 +188,9 @@ void CAirRide::GetMode()
     {        
         mode = (modes_t)m;
         
-        Log(MODULE, "Mode", states[m]);
+        Serial.print(F(">AirRide, Mode"));
+        Serial.print(states[m]);
+        Serial.println(F("<"));
         
         LastMode = (modes_t)m;
     }
@@ -349,9 +347,14 @@ void CAirRide::Run()
     
     if(IsTimedOut(250, SampleTime))
     {      
-        Log(MODULE, "SetPoint", SetPoint);
-        Log(MODULE, "Tilt", Tilt);
-       
+        Serial.print(F("AirRide,SetPoint,"));
+        Serial.print(SetPoint);
+        Serial.println(F("<"));
+        
+        Serial.print(F("AirRide,Tilt,"));
+        Serial.print(Tilt);
+        Serial.println(F("<"));
+               
         SampleTime = millis();
     }
 
@@ -439,7 +442,7 @@ void CAirRide::Run()
                     //wait 10 seconds if no movement cancel calibration
                     if(true == IsTimedOut(10000, MoveTimeOut) )
                     {
-                        Log(MODULE, "msg", "Cal failed to Lower");      
+                        Serial.println(F("AirRide,msg,Cal failed to Lower<"));
                         MoveTimeOut = millis();
                         
                         //SetState(CALDONELED);
@@ -468,15 +471,21 @@ void CAirRide::Run()
                     //wait 10 seconds to see if we get any more movement
                 if(IsTimedOut(10000, MoveTimeOut))
                 {
-                    Log(MODULE, "msg", "All Down");      
+                    Serial.println(F("AirRide,msg,All Down<"));
+                    
                     MoveTimeOut = millis();
                     
                     LeftLowLimit = CornerL.GetHeight();
                     RightLowLimit = CornerR.GetHeight();
                     
-                    Log(MODULE,"msg,Left low cal; ", LeftLowLimit);
-                    Log(MODULE,"msg,Right low cal; ", RightLowLimit);
+                    Serial.print(F("AirRide,msg,Left low cal; "));
+                    Serial.print(LeftLowLimit);
+                    Serial.println(F("<")); 
                     
+                    Serial.print(F("AirRide,msg,Right low cal; "));
+                    Serial.print(RightLowLimit);
+                    Serial.println(F("<"));
+
                     SetState(CALWAITHIGH);
                 }
 
@@ -498,7 +507,7 @@ void CAirRide::Run()
                 //wait 10 seconds if no movement cancel calibration
                 if(IsTimedOut(20000, MoveTimeOut))
                 {
-                    Log(MODULE, "msg", "Cal failed to rise");      
+                    Serial.println(F("AirRide,msg,Cal failed to rise<"));
                     MoveTimeOut = millis();
                     
                     SetState(CALDONELED);
@@ -518,14 +527,20 @@ void CAirRide::Run()
                 //wait 10 seconds to see if we get any more movement
                 if(IsTimedOut(20000, MoveTimeOut) )
                 {
-                    Log(MODULE, "msg", "All up");      
+                    Serial.println(F("AirRide,msg,All up<"));
+     
                     MoveTimeOut = millis();
                     
                     LeftHighLimit = CornerL.GetHeight();
                     RightHighLimit = CornerR.GetHeight();
                     
-                    Log(MODULE,"msg,Left hi cal; ", LeftHighLimit);
-                    Log(MODULE,"msg,Right hi cal; ", RightHighLimit);
+                    Serial.print(F("AirRide,msg,Left hi cal; "));
+                    Serial.print(RightHighLimit);
+                    Serial.println(F("<"));
+                    
+                    Serial.print(F("AirRide,msg,Right hi cal; "));
+                    Serial.print(RightLowLimit);
+                    Serial.println(F("<"));
                     
                     SetState(CALSAVELIMITS);
                 }
@@ -568,8 +583,14 @@ void CAirRide::Run()
             EEProm.SaveLeftTravel(LTravelHeight); 
             EEProm.SaveRightTravel(RTravelHeight);
                     
-            Log(MODULE,"msg,Left Travel Height; ", LTravelHeight);
-            Log(MODULE,"msg,Right Travel Height; ", RTravelHeight);
+            Serial.print(F("AirRide,msg,Left Travel Height; "));
+            Serial.print(LTravelHeight);
+            Serial.println(F("<"));
+
+            Serial.print(F("AirRide,msg,Right Travel Height; "));
+            Serial.print(RTravelHeight);
+            Serial.println(F("<"));                    
+
             break;
         default:
             SetState(RUNMANUAL);

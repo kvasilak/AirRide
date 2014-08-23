@@ -21,7 +21,10 @@
 #ifndef INCLUDE_COMMON_H
 #define INCLUDE_COMMON_H
 
-#include "debug.h"
+//create enums with printable string versions
+#define STRINGIFY(k) #k,
+
+#define ENUMIFY(k)  k,
 
 #define STATES_LIST(macro)\
     macro(RUNAUTOCAL)               \

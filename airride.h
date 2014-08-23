@@ -21,7 +21,6 @@
 #ifndef INCLUDE_AIRRIDE_H
 #define INCLUDE_AIRRIDE_H
 
-#include "debug.h"
 #include "corner.h"
 #include "common.h"
 #include "gmceeprom.h"
