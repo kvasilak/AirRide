@@ -78,27 +78,27 @@ void CAirRide::SetState(states_t s)
     static states_t laststate = LASTSTATE;
     //const char * const statestrs[] PROGMEM = {STATES_LIST(STRINGIFY)};
     
-    const char s0[] PROGMEM = "RUNAUTOCAL";
-    const char s1[] PROGMEM = "RUNCAMP";
-    const char s2[] PROGMEM = "ENTERMANUAL";
-    const char s3[] PROGMEM = "ENTERTRAVEL";
-    const char s4[] PROGMEM = "CALLIMITS";
-    const char s5[] PROGMEM = "CALLOW";
-    const char s6[] PROGMEM = "CALWAITHIGH";
-    const char s7[] PROGMEM = "CALHIGH";
-    const char s8[] PROGMEM = "CALSAVELIMITS";
-    const char s9[] PROGMEM = "CALDONELED";
-    const char s10[] PROGMEM = "CALDONE";
-    const char s11[] PROGMEM = "CALCOMPLETE";
-    const char s12[] PROGMEM = "RUNMANUAL";
-    const char s13[] PROGMEM = "STARTTRAVEL";
-    const char s14[] PROGMEM = "RUNTRAVEL";
-    const char s15[] PROGMEM = "CALTRAVEL";
-    const char s16[] PROGMEM = "CALTRAVELDONE";
-    const char s17[] PROGMEM = "LASTSTATE";
+    static const char s0[] PROGMEM = "RUNAUTOCAL";
+    static const char s1[] PROGMEM = "RUNCAMP";
+    static const char s2[] PROGMEM = "ENTERMANUAL";
+    static const char s3[] PROGMEM = "ENTERTRAVEL";
+    static const char s4[] PROGMEM = "CALLIMITS";
+    static const char s5[] PROGMEM = "CALLOW";
+    static const char s6[] PROGMEM = "CALWAITHIGH";
+    static const char s7[] PROGMEM = "CALHIGH";
+    static const char s8[] PROGMEM = "CALSAVELIMITS";
+    static const char s9[] PROGMEM = "CALDONELED";
+    static const char s10[] PROGMEM = "CALDONE";
+    static const char s11[] PROGMEM = "CALCOMPLETE";
+    static const char s12[] PROGMEM = "RUNMANUAL";
+    static const char s13[] PROGMEM = "STARTTRAVEL";
+    static const char s14[] PROGMEM = "RUNTRAVEL";
+    static const char s15[] PROGMEM = "CALTRAVEL";
+    static const char s16[] PROGMEM = "CALTRAVELDONE";
+    static const char s17[] PROGMEM = "LASTSTATE";
     
 
-    const char * const statestrs[] PROGMEM = {s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17};
+    static const char * const statestrs[] PROGMEM = {s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17};
     
     if(s != laststate)
     {
@@ -202,11 +202,11 @@ bool CAirRide::Calibrate()
 //   1        1       Travel 
 void CAirRide::GetMode()
 {
-    const char s0[] PROGMEM = "AUTOCALMODE";
-    const char s1[] PROGMEM = "CAMPMODE";
-    const char s2[] PROGMEM = "MANUALMODE";
-    const char s3[] PROGMEM = "TRAVELMODE";
-    const char * const modestrs[] PROGMEM = {s0, s1, s2, s3};
+    static const char s0[] PROGMEM = "AUTOCALMODE";
+    static const char s1[] PROGMEM = "CAMPMODE";
+    static const char s2[] PROGMEM = "MANUALMODE";
+    static const char s3[] PROGMEM = "TRAVELMODE";
+    static const char * const modestrs[] PROGMEM = {s0, s1, s2, s3};
     
     static modes_t LastMode = CAMPMODE;//should always be different the first test
     //static const char *states[] = {MODES_LIST(STRINGIFY)};

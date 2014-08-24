@@ -169,17 +169,15 @@ void CCorner::PrintCorner()
 
 void CCorner::SetState(ValveOp s)
 {
-    const char s0[] PROGMEM = "Initing";
-    const char s1[] PROGMEM = "Filling";
-    const char s2[] PROGMEM = "FillPulse";
-    const char s3[] PROGMEM = "Dumping";
-    const char s4[] PROGMEM = "DumpPulse";
-    const char s5[] PROGMEM = "HoldEntry";
-    const char s6[] PROGMEM = "Holding";
-    const char s7[] PROGMEM = "LastState";
-
-    
-    const char * const StateStrs[] PROGMEM = {s0, s1, s2, s3, s4, s5, s6, s7};
+    static const char s0[] PROGMEM = "Initing";
+    static const char s1[] PROGMEM = "Filling";
+    static const char s2[] PROGMEM = "FillPulse";
+    static const char s3[] PROGMEM = "Dumping";
+    static const char s4[] PROGMEM = "DumpPulse";
+    static const char s5[] PROGMEM = "HoldEntry";
+    static const char s6[] PROGMEM = "Holding";
+    static const char s7[] PROGMEM = "LastState";
+    static const char * const StateStrs[] PROGMEM = {s0, s1, s2, s3, s4, s5, s6, s7};
     
     char buffer[15];
     strcpy_P(buffer, (char*)pgm_read_word(&(StateStrs[s]))); // copy strings out of program space
@@ -329,29 +327,29 @@ void CCorner::DoHeight(int32_t height, int32_t setpoint)
            switch(corner)
            {
                 case LeftRear:
-                    Serial.print(F(">Corner, LError"));
+                    Serial.print(F(">Corner, LError,"));
                     Serial.print(height - setpoint);
-                    Serial.println(F("<"));
+                    Serial.println("<");
 
-                    Serial.print(F(">Corner, LeftHeight"));
+                    Serial.print(F(">Corner, LeftHeight,"));
                     Serial.print(height);
                     Serial.println(F("<"));
 
-                    Serial.print(F(">Corner, LeftSlow"));
+                    Serial.print(F(">Corner, LeftSlow,"));
                     Serial.print(slowheight - setpoint);
                     Serial.println(F("<"));
 
                     break;
                 case RightRear:
-                    Serial.print(F(">Corner, RError"));
+                    Serial.print(F(">Corner, RError,"));
                     Serial.print(height - setpoint);
                     Serial.println(F("<"));
 
-                    Serial.print(F(">Corner, RightHeight"));
+                    Serial.print(F(">Corner, RightHeight,"));
                     Serial.print(height);
                     Serial.println(F("<"));
 
-                    Serial.print(F(">Corner, RightSlow"));
+                    Serial.print(F(">Corner, RightSlow,"));
                     Serial.print(slowheight - setpoint);
                     Serial.println(F("<"));                
 
