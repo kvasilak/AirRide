@@ -169,13 +169,26 @@ void CCorner::PrintCorner()
 
 void CCorner::SetState(ValveOp s)
 {
-    ValveOp laststate = Holding;
+    const char s0[] PROGMEM = "Initing";
+    const char s1[] PROGMEM = "Filling";
+    const char s2[] PROGMEM = "FillPulse";
+    const char s3[] PROGMEM = "Dumping";
+    const char s4[] PROGMEM = "DumpPulse";
+    const char s5[] PROGMEM = "HoldEntry";
+    const char s6[] PROGMEM = "Holding";
+    const char s7[] PROGMEM = "LastState";
+
     
-    static char *StateStrs[] = {VALVE_STATES_LIST(STRINGIFY)};
+    const char * const StateStrs[] PROGMEM = {s0, s1, s2, s3, s4, s5, s6, s7};
+    
+    char buffer[15];
+    strcpy_P(buffer, (char*)pgm_read_word(&(StateStrs[s]))); // copy strings out of program space
+    
+    ValveOp laststate = Holding;
 
     Serial.print(F(">Corner,"));
     PrintCorner();
-    Serial.print(StateStrs[s]);
+    Serial.print(buffer);
     Serial.println(F("<"));
     
     if(laststate != s)

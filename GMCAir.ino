@@ -19,7 +19,6 @@
 **    GMCAit.ino
 **************************************************************************/
 
-#include "debug.h"
 #include "airride.h"
 #include <EEPROM.h>
 

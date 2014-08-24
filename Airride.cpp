@@ -76,14 +76,38 @@ void CAirRide::Init()
 void CAirRide::SetState(states_t s)
 {
     static states_t laststate = LASTSTATE;
-    static const char *statestrs[] = {STATES_LIST(STRINGIFY)};
+    //const char * const statestrs[] PROGMEM = {STATES_LIST(STRINGIFY)};
+    
+    const char s0[] PROGMEM = "RUNAUTOCAL";
+    const char s1[] PROGMEM = "RUNCAMP";
+    const char s2[] PROGMEM = "ENTERMANUAL";
+    const char s3[] PROGMEM = "ENTERTRAVEL";
+    const char s4[] PROGMEM = "CALLIMITS";
+    const char s5[] PROGMEM = "CALLOW";
+    const char s6[] PROGMEM = "CALWAITHIGH";
+    const char s7[] PROGMEM = "CALHIGH";
+    const char s8[] PROGMEM = "CALSAVELIMITS";
+    const char s9[] PROGMEM = "CALDONELED";
+    const char s10[] PROGMEM = "CALDONE";
+    const char s11[] PROGMEM = "CALCOMPLETE";
+    const char s12[] PROGMEM = "RUNMANUAL";
+    const char s13[] PROGMEM = "STARTTRAVEL";
+    const char s14[] PROGMEM = "RUNTRAVEL";
+    const char s15[] PROGMEM = "CALTRAVEL";
+    const char s16[] PROGMEM = "CALTRAVELDONE";
+    const char s17[] PROGMEM = "LASTSTATE";
+    
+
+    const char * const statestrs[] PROGMEM = {s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17};
     
     if(s != laststate)
     {
+        char buffer[15];
+        strcpy_P(buffer, (char*)pgm_read_word(&(statestrs[s]))); // copy strings out of program space
+    
         Serial.print(F("AirRide,MainState,"));
-        Serial.print(statestrs[s]);
+        Serial.print(buffer);
         Serial.println(F("<"));
-        //Log(MODULE, "MainState", statestrs[s]);
         laststate = s;
     }
     state = s;
@@ -178,8 +202,14 @@ bool CAirRide::Calibrate()
 //   1        1       Travel 
 void CAirRide::GetMode()
 {
+    const char s0[] PROGMEM = "AUTOCALMODE";
+    const char s1[] PROGMEM = "CAMPMODE";
+    const char s2[] PROGMEM = "MANUALMODE";
+    const char s3[] PROGMEM = "TRAVELMODE";
+    const char * const modestrs[] PROGMEM = {s0, s1, s2, s3};
+    
     static modes_t LastMode = CAMPMODE;//should always be different the first test
-    static const    char *states[] = {MODES_LIST(STRINGIFY)};
+    //static const char *states[] = {MODES_LIST(STRINGIFY)};
 
     int m = digitalRead(PINMODE1);
     m |= digitalRead(PINMODE2) <<1;
@@ -188,8 +218,11 @@ void CAirRide::GetMode()
     {        
         mode = (modes_t)m;
         
+        char buffer[15];
+        strcpy_P(buffer, (char*)pgm_read_word(&(modestrs[m]))); // copy strings out of program space
+        
         Serial.print(F(">AirRide, Mode"));
-        Serial.print(states[m]);
+        Serial.print(buffer);
         Serial.println(F("<"));
         
         LastMode = (modes_t)m;
