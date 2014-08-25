@@ -44,6 +44,9 @@ class CAirRide
     bool AllUp(int *oldleft, int *oldright, int left, int right);
     bool IsRising(int *OldLeft, int *Oldright, int LRheight, int RRheight);
     void CalLED(bool on);
+    void LISInit();
+    void LISGetID();
+    void LISGetXYZ();
     
     CCorner CornerL;
     CCorner CornerR;

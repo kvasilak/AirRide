@@ -84,6 +84,8 @@ bool IsTimedOut(uint32_t period, uint32_t start);
 #define SERVO               2
 #define LED                 3       //LED and cal share a pin
 #define PINCAL              3
+#define speed               4
+#define intermit            5
 #define PINMODE1            6
 #define PINMODE2            7
 #define PINFILL_LEFTREAR    8

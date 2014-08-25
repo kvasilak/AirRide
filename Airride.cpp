@@ -24,12 +24,27 @@
 #include "gmceeprom.h"
 #include "airride.h"
 
+
+//8, 1
+//9, 2
+//10, 3
+//11, 4
+//12, 5
+
+#define SCL_PIN 5 //pin 13
+#define SCL_PORT PORTB 
+#define SDA_PIN 4 //pin 12
+#define SDA_PORT PORTB 
+#define LISADDR 0x18
+#include "SoftI2CMaster.h"
+
 CAirRide::CAirRide()
 {
 }
 
 void CAirRide::Init()
 {
+
     Serial.println(F(">AirRide,msg,GMC Air Ride Controller V1.0<"));
 
     SampleTime = millis();
@@ -69,9 +84,49 @@ void CAirRide::Init()
     Serial.print(RightHighLimit);
     Serial.println(F("<"));
     
+    Serial.print(F(">AirRide,msg,Before!!<"));
+    LISInit();
+    Serial.print(F(">AirRide,msg,After!!<"));
+    
+    LISGetID();
+    
     CheckEvents();
   
 }
+
+void CAirRide::LISInit()
+{
+    if(i2c_init())
+    {
+        Serial.print(F(">AirRide,msg,Init OK!!<"));
+    
+        if(i2c_start(LISADDR | I2C_WRITE))
+        {
+            i2c_write(0x20);
+            i2c_write(0x67);
+            i2c_stop();
+            
+            Serial.print(F(">AirRide,msg,LIS started!!<"));
+        }
+        else
+        {
+            Serial.print(F(">AirRide,msg,LIS FAILED!!<"));
+        }
+    }
+    else
+    {
+        Serial.print(F(">AirRide,msg,Init Failed!!<"));
+    }
+}
+
+void CAirRide::LISGetID()
+{
+    i2c_start(LISADDR | I2C_WRITE);
+}
+
+void CAirRide::LISGetXYZ()
+{
+}    
 
 void CAirRide::SetState(states_t s)
 {
@@ -209,7 +264,6 @@ void CAirRide::GetMode()
     static const char * const modestrs[] PROGMEM = {s0, s1, s2, s3};
     
     static modes_t LastMode = CAMPMODE;//should always be different the first test
-    //static const char *states[] = {MODES_LIST(STRINGIFY)};
 
     int m = digitalRead(PINMODE1);
     m |= digitalRead(PINMODE2) <<1;
