@@ -80,6 +80,7 @@ bool IsTimedOut(uint32_t period, uint32_t start);
 #define PINTILT  A6
 //#define  A7
 
+
 // === Digital =======================
 #define SERVO               2
 #define LED                 3       //LED and cal share a pin
@@ -92,7 +93,7 @@ bool IsTimedOut(uint32_t period, uint32_t start);
 #define PINDUMP_LEFTREAR    9
 #define PINDUMP_RIGHTREAR   10
 #define PINFILL_RIGHTREAR   11
-#define ACCEL_I2C_DATA      12
-#define ACCEL_I2C_CLOCK     13
+//#define ACCEL_I2C_DATA      12
+#define CAL_LED             13
 
 #endif

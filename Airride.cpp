@@ -24,20 +24,6 @@
 #include "gmceeprom.h"
 #include "airride.h"
 
-
-//8, 1
-//9, 2
-//10, 3
-//11, 4
-//12, 5
-
-#define SCL_PIN 5 //pin 13
-#define SCL_PORT PORTB 
-#define SDA_PIN 4 //pin 12
-#define SDA_PORT PORTB 
-#define LISADDR 0x18
-#include "SoftI2CMaster.h"
-
 CAirRide::CAirRide()
 {
 }
@@ -46,6 +32,11 @@ void CAirRide::Init()
 {
 
     Serial.println(F(">AirRide,msg,GMC Air Ride Controller V1.0<"));
+    
+    pinMode(2, OUTPUT);
+    pinMode(12, OUTPUT);
+    pinMode(13, OUTPUT);
+    CalLED(false); 
 
     SampleTime = millis();
 
@@ -84,49 +75,10 @@ void CAirRide::Init()
     Serial.print(RightHighLimit);
     Serial.println(F("<"));
     
-    Serial.print(F(">AirRide,msg,Before!!<"));
-    LISInit();
-    Serial.print(F(">AirRide,msg,After!!<"));
-    
-    LISGetID();
-    
     CheckEvents();
   
 }
 
-void CAirRide::LISInit()
-{
-    if(i2c_init())
-    {
-        Serial.print(F(">AirRide,msg,Init OK!!<"));
-    
-        if(i2c_start(LISADDR | I2C_WRITE))
-        {
-            i2c_write(0x20);
-            i2c_write(0x67);
-            i2c_stop();
-            
-            Serial.print(F(">AirRide,msg,LIS started!!<"));
-        }
-        else
-        {
-            Serial.print(F(">AirRide,msg,LIS FAILED!!<"));
-        }
-    }
-    else
-    {
-        Serial.print(F(">AirRide,msg,Init Failed!!<"));
-    }
-}
-
-void CAirRide::LISGetID()
-{
-    i2c_start(LISADDR | I2C_WRITE);
-}
-
-void CAirRide::LISGetXYZ()
-{
-}    
 
 void CAirRide::SetState(states_t s)
 {
@@ -213,6 +165,7 @@ bool CAirRide::Calibrate()
                 if(IsTimedOut(5000, pressstart))
                 {
                     Serial.println(F(">AirRide, CalState, Pressed<"));
+                    CalLED(true);
                     //Button un pressed long enough!
                     //Now wait another 5 seconds
                     pressstart = millis();
@@ -221,6 +174,7 @@ bool CAirRide::Calibrate()
                 else //button pressed too soon, restart timer
                 {
                     Serial.println(F(">AirRide, CalState, Released<"));
+                    CalLED(false);
                     
                     pressstart = millis();
                     calstate = 0;
@@ -235,6 +189,7 @@ bool CAirRide::Calibrate()
                 {
                     Serial.println(F(">AirRide, CalState, Calibrate<"));
                     //user completed the magic sequence, calibrate!
+                    CalLED(false);
                     docal = true;
                     calstate=0;
                 }
@@ -411,14 +366,11 @@ void CAirRide::CalLED( bool on)
     if(on)
     {
         //make output and turn on LED
-        pinMode(PINCAL, OUTPUT);
-        digitalWrite(PINCAL, HIGH);
+        digitalWrite(CAL_LED, HIGH);
     }
     else
     {
-        digitalWrite(PINCAL, LOW);
-        pinMode(PINCAL, INPUT_PULLUP);
-        
+        digitalWrite(CAL_LED, LOW);       
     }
 }
 
@@ -432,13 +384,14 @@ void CAirRide::Run()
     //increasing value (>512) means raise right side, lower left side
     //decreasing value (<512) means raise left side, Lover right side
     
-    if(IsTimedOut(250, SampleTime))
+    if(IsTimedOut(500 /*250*/, SampleTime))
     {      
-        Serial.print(F("AirRide,SetPoint,"));
+       
+        Serial.print(F(">AirRide,SetPoint,"));
         Serial.print(SetPoint);
         Serial.println(F("<"));
         
-        Serial.print(F("AirRide,Tilt,"));
+        Serial.print(F(">AirRide,Tilt,"));
         Serial.print(Tilt);
         Serial.println(F("<"));
                
