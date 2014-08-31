@@ -145,7 +145,7 @@ namespace Mettle
                 this.Invoke(new Action<string>(myErrorHandeler), new object[] { s });
                 return;
             }
-            stripError.Text = "Error! " + s;
+            txtErrors.AppendText(s + "\r\n");
         }
 
         private void btnOK_Click(object sender, EventArgs e)
@@ -268,17 +268,9 @@ namespace Mettle
             txtModules.Clear();
             txtUniques.Clear();
             txtTagData.Clear();
+            txtErrors.Clear();
         }
 
-        private void tagText5_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label10_Click(object sender, EventArgs e)
-        {
-
-        }
 
     }
 }

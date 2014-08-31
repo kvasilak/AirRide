@@ -85,38 +85,38 @@ void CAirRide::SetState(states_t s)
     static states_t laststate = LASTSTATE;
     //const char * const statestrs[] PROGMEM = {STATES_LIST(STRINGIFY)};
     
-    static const char s0[] PROGMEM = "RUNAUTOCAL";
-    static const char s1[] PROGMEM = "RUNCAMP";
-    static const char s2[] PROGMEM = "ENTERMANUAL";
-    static const char s3[] PROGMEM = "ENTERTRAVEL";
-    static const char s4[] PROGMEM = "CALLIMITS";
-    static const char s4a[] PROGMEM = "CALLIMITSRUN";
-    static const char s5[] PROGMEM = "CALLOW";
-    static const char s6[] PROGMEM = "CALWAITHIGH";
-    static const char s7[] PROGMEM = "CALHIGH";
-    static const char s8[] PROGMEM = "CALSAVELIMITS";
-    static const char s9[] PROGMEM = "CALDONELED";
-    static const char s9a[] PROGMEM = "CALDONE";
-    static const char s10[] PROGMEM = "CALDONE";
-    static const char s11[] PROGMEM = "CALCOMPLETE";
-    static const char s12[] PROGMEM = "RUNMANUAL";
-    static const char s13[] PROGMEM = "STARTTRAVEL";
-    static const char s14[] PROGMEM = "RUNTRAVEL";
-    static const char s15[] PROGMEM = "CALTRAVEL";
-    static const char s16[] PROGMEM = "CALTRAVELDONE";
-    static const char s17[] PROGMEM = "LASTSTATE";
+    static const char s0[] PROGMEM = "RUN AUTOCAL";
+    static const char s1[] PROGMEM = "RUN CAMP";
+    static const char s2[] PROGMEM = "ENTER MANUAL";
+    static const char s3[] PROGMEM = "ENTER TRAVEL";
+    static const char s4[] PROGMEM = "CAL LIMITS";
+    static const char s4a[] PROGMEM = "CAL LIMITS RUN";
+    static const char s5[] PROGMEM = "CAL LOW";
+    static const char s6[] PROGMEM = "CAL WAIT HIGH";
+    static const char s7[] PROGMEM = "CAL HIGH";
+    static const char s8[] PROGMEM = "CAL SAVE LIMITS";
+    static const char s9[] PROGMEM = "CAL DONE LED";
+    static const char s9a[] PROGMEM = "CAL DONE";
+    static const char s10[] PROGMEM = "CAL DONE OFF";
+    static const char s11[] PROGMEM = "CAL COMPLETE";
+    static const char s12[] PROGMEM = "RUN MANUAL";
+    static const char s13[] PROGMEM = "START TRAVEL";
+    static const char s14[] PROGMEM = "RUN TRAVEL";
+    static const char s15[] PROGMEM = "CAL TRAVEL";
+    static const char s16[] PROGMEM = "CAL TRAVEL DONE";
+    static const char s17[] PROGMEM = "LAST STATE";
     
 
     static const char * const statestrs[] PROGMEM = {s0, s1, s2, s3, s4, s4a, s5, s6, s7, s8, s9,s9a, s10, s11, s12, s13, s14, s15, s16, s17};
     
     if(s != laststate)
     {
-        char buffer[15];
+        char buffer[20];
         strcpy_P(buffer, (char*)pgm_read_word(&(statestrs[s]))); // copy strings out of program space
     
         Serial.print(F(">AirRide,MainState,"));
-        //Serial.print(buffer);
-        Serial.print(s);
+        Serial.print(buffer);
+        //Serial.print(s);
         Serial.println(F("<"));
         laststate = s;
     }
@@ -224,10 +224,10 @@ bool CAirRide::Calibrate()
 //   1        1       Travel 
 void CAirRide::GetMode()
 {
-    static const char s0[] PROGMEM = "AUTOCALMODE";
-    static const char s1[] PROGMEM = "CAMPMODE";
-    static const char s2[] PROGMEM = "MANUALMODE";
-    static const char s3[] PROGMEM = "TRAVELMODE";
+    static const char s0[] PROGMEM = "AUTO CAL MODE";
+    static const char s1[] PROGMEM = "CAMP MODE";
+    static const char s2[] PROGMEM = "MANUAL MODE";
+    static const char s3[] PROGMEM = "TRAVEL MODE";
     static const char * const modestrs[] PROGMEM = {s0, s1, s2, s3};
     
     static modes_t LastMode = CAMPMODE;//should always be different the first test
@@ -242,9 +242,9 @@ void CAirRide::GetMode()
         char buffer[15];
         strcpy_P(buffer, (char*)pgm_read_word(&(modestrs[m]))); // copy strings out of program space
         
-        Serial.print(F(">AirRide, Mode"));
-        //Serial.print(buffer);
-        Serial.print(m);
+        Serial.print(F(">AirRide, Mode,"));
+        Serial.print(buffer);
+        //Serial.print(m);
         Serial.println(F("<"));
         
         LastMode = (modes_t)m;
@@ -401,7 +401,7 @@ void CAirRide::Run()
     //increasing value (>512) means raise right side, lower left side
     //decreasing value (<512) means raise left side, Lover right side
     
-    if(IsTimedOut(500 /*250*/, SampleTime))
+    if(IsTimedOut(250, SampleTime))
     {      
        
         Serial.print(F(">AirRide,SetPoint,"));
