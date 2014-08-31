@@ -90,11 +90,13 @@ void CAirRide::SetState(states_t s)
     static const char s2[] PROGMEM = "ENTERMANUAL";
     static const char s3[] PROGMEM = "ENTERTRAVEL";
     static const char s4[] PROGMEM = "CALLIMITS";
+    static const char s4a[] PROGMEM = "CALLIMITSRUN";
     static const char s5[] PROGMEM = "CALLOW";
     static const char s6[] PROGMEM = "CALWAITHIGH";
     static const char s7[] PROGMEM = "CALHIGH";
     static const char s8[] PROGMEM = "CALSAVELIMITS";
     static const char s9[] PROGMEM = "CALDONELED";
+    static const char s9a[] PROGMEM = "CALDONE";
     static const char s10[] PROGMEM = "CALDONE";
     static const char s11[] PROGMEM = "CALCOMPLETE";
     static const char s12[] PROGMEM = "RUNMANUAL";
@@ -105,15 +107,16 @@ void CAirRide::SetState(states_t s)
     static const char s17[] PROGMEM = "LASTSTATE";
     
 
-    static const char * const statestrs[] PROGMEM = {s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17};
+    static const char * const statestrs[] PROGMEM = {s0, s1, s2, s3, s4, s4a, s5, s6, s7, s8, s9,s9a, s10, s11, s12, s13, s14, s15, s16, s17};
     
     if(s != laststate)
     {
         char buffer[15];
         strcpy_P(buffer, (char*)pgm_read_word(&(statestrs[s]))); // copy strings out of program space
     
-        Serial.print(F("AirRide,MainState,"));
-        Serial.print(buffer);
+        Serial.print(F(">AirRide,MainState,"));
+        //Serial.print(buffer);
+        Serial.print(s);
         Serial.println(F("<"));
         laststate = s;
     }
@@ -164,8 +167,9 @@ bool CAirRide::Calibrate()
                 //don't press button for 5 seconds
                 if(IsTimedOut(5000, pressstart))
                 {
-                    Serial.println(F(">AirRide, CalState, Pressed<"));
                     CalLED(true);
+                  
+                    Serial.println(F(">AirRide, CalState, Pressed<"));
                     //Button un pressed long enough!
                     //Now wait another 5 seconds
                     pressstart = millis();
@@ -182,24 +186,32 @@ bool CAirRide::Calibrate()
             }
             break;
         case 2:
+
+          //Hold button down for 5 seconds
+          if(IsTimedOut(5000, pressstart))
+          {
+            //turn LED on after being pressed for 5 seconds
+            CalLED(false);
+            
             if(!pressed)
             {
-                //Hold button down for 5 seconds
-                if(IsTimedOut(5000, pressstart))
-                {
-                    Serial.println(F(">AirRide, CalState, Calibrate<"));
-                    //user completed the magic sequence, calibrate!
-                    CalLED(false);
-                    docal = true;
-                    calstate=0;
-                }
-                else
-                {
-                    //user let go too soon
-                    calstate = 0;
-                }
-            }  
-            break;
+              Serial.println(F(">AirRide, CalState, Calibrate<"));
+              //user completed the magic sequence, calibrate!
+              CalLED(false);
+              docal = true;
+              calstate=0;
+            }
+          }
+          else
+          {
+            if(!pressed)
+            {
+              CalLED(false);
+              //user let go too soon
+              calstate = 0;
+            }
+          }
+          break;
     }
     
     return docal;
@@ -231,7 +243,8 @@ void CAirRide::GetMode()
         strcpy_P(buffer, (char*)pgm_read_word(&(modestrs[m]))); // copy strings out of program space
         
         Serial.print(F(">AirRide, Mode"));
-        Serial.print(buffer);
+        //Serial.print(buffer);
+        Serial.print(m);
         Serial.println(F("<"));
         
         LastMode = (modes_t)m;
@@ -336,6 +349,7 @@ void CAirRide::CheckEvents()
             break;
         //no change allowed during limit calibration
         case CALLIMITS: 
+        case CALLIMITSRUN:
         case CALLOW:
         case CALWAITHIGH:   
         case CALHIGH:
@@ -376,6 +390,9 @@ void CAirRide::CalLED( bool on)
 
 void CAirRide::Run() 
 {
+    static bool bBlink = false;
+    static uint32_t blinktime = millis();
+  
     SetPoint = analogRead(PINSETPOINT);
     Tilt = analogRead(PINTILT)-512;
         
@@ -466,8 +483,21 @@ void CAirRide::Run()
         //raise and lower the coach to find the upper and lower limits of travel 
         //must be in travelmode before pressing cal button
         case CALLIMITS:
+          blinktime = millis();
+          MoveTimeOut = millis();
+          SetState(CALLIMITSRUN);
+          break;
+        case CALLIMITSRUN:
             CornerL.Run(0);  
             CornerR.Run(0);
+          
+            //Blink Cal LED fast
+            if(IsTimedOut(25, blinktime))
+            {
+              CalLED(bBlink);
+              bBlink = !bBlink;
+              blinktime = millis();
+            }
             
             if(CornerL.GetHeight() > 200)
             {
@@ -482,10 +512,10 @@ void CAirRide::Run()
                     //wait 10 seconds if no movement cancel calibration
                     if(true == IsTimedOut(10000, MoveTimeOut) )
                     {
-                        Serial.println(F("AirRide,msg,Cal failed to Lower<"));
+                        Serial.println(F(">AirRide,msg,Cal failed to Lower<"));
                         MoveTimeOut = millis();
                         
-                        //SetState(CALDONELED);
+                        SetState(CALDONELED);
                     }
                 }
             }
@@ -499,6 +529,14 @@ void CAirRide::Run()
         case CALLOW:
             CornerL.Run(0);  
             CornerR.Run(0);
+            
+            //blink Cal LEd kinda fast
+            if(IsTimedOut(500, blinktime))
+            {
+              CalLED(bBlink);
+              bBlink != bBlink;
+              blinktime = millis();
+            }
             
             //wait for car to be all the way down
             if(CornerL.IsMoving() || CornerR.IsMoving())
@@ -535,6 +573,14 @@ void CAirRide::Run()
             CornerL.Run(1024);  
             CornerR.Run(1024);
             
+            //blink cal led slow
+            if(IsTimedOut(1000, blinktime))
+            {
+              CalLED(bBlink);
+              bBlink != bBlink;
+              blinktime = millis();
+            }
+            
             //wait for the car to start rising
             if(CornerL.IsMoving() || CornerR.IsMoving() )   
             {
@@ -557,6 +603,8 @@ void CAirRide::Run()
         case CALHIGH:
             CornerL.Run(1024);  
             CornerR.Run(1024);
+            
+            //Cal LED on
             
             if(CornerL.IsMoving() || CornerR.IsMoving() )
             {
@@ -596,8 +644,17 @@ void CAirRide::Run()
             break;
          //done with cal, show cal LED for 1 sec 
         case CALDONELED:
-            CalLED(true);
-            SetState(CALDONE);
+            CalLED(false);
+            SetState(CALDONEOFF);
+            MoveTimeOut = millis();
+            break;
+        case CALDONEOFF:
+            if(IsTimedOut(1000, MoveTimeOut))
+            {
+                CalLED(true);
+                SetState(CALDONE);
+                MoveTimeOut = millis();
+            }
             break;
         case CALDONE:
             if(IsTimedOut(1000, MoveTimeOut))

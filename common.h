@@ -32,12 +32,14 @@
     macro(ENTERMANUAL)              \
     macro(ENTERTRAVEL)              \
     macro(CALLIMITS)                \
+    macro(CALLIMITSRUN)             \
     macro(CALLOW)                   \
     macro(CALWAITHIGH)              \
     macro(CALHIGH)                  \
     macro(CALSAVELIMITS)            \
     macro(CALDONELED)               \
     macro(CALDONE)                  \
+    macro(CALDONEOFF)               \
     macro(CALCOMPLETE)              \
     macro(RUNMANUAL)                \
     macro(STARTTRAVEL)              \
