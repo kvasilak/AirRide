@@ -52,8 +52,8 @@ void CAirRide::Init()
     EEProm.GetLimits(&LeftLowLimit, &LeftHighLimit, &RightLowLimit, &RightHighLimit);
     
     //debug, force travel height to known value
-    //EEProm.SaveLeftTravel(642); 
-    //EEProm.SaveRightTravel(698);
+    //EEProm.SaveLeftTravel(512); 
+    //EEProm.SaveRightTravel(512);
 
     LTravelHeight = EEProm.GetLeftTravel(); //642
     RTravelHeight = EEProm.GetRightTravel(); //698
