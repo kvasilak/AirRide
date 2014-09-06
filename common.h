@@ -74,13 +74,13 @@ bool IsTimedOut(uint32_t period, uint32_t start);
 //IO map
 //=== Analog ===================
 #define PINSETPOINT A0
-//#define PINTILT     A1 //this input is bad
+#define PINTILT     A1 //this input is bad
 #define PINRRHEIGHT A2
 #define PINLRHEIGHT A3
-#define PINDUMP     A4
-#define WIPERSPEED  A5
-#define PINTILT  A6
-//#define  A7
+#define WIPERSPEED  A4
+#define XAXIS      A5
+#define YAXIS      A6
+#define ZAXIS      A7
 
 
 // === Digital =======================

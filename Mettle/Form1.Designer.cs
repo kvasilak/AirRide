@@ -28,13 +28,13 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series4 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series5 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend2 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series6 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series7 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series8 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series9 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series10 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             this.tabMain = new System.Windows.Forms.TabControl();
             this.tabChart = new System.Windows.Forms.TabPage();
@@ -91,6 +91,12 @@
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.stripStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.stripError = new System.Windows.Forms.ToolStripStatusLabel();
+            this.tagText15 = new MettleLib.TagText();
+            this.tagText16 = new MettleLib.TagText();
+            this.tagText17 = new MettleLib.TagText();
+            this.label18 = new System.Windows.Forms.Label();
+            this.label19 = new System.Windows.Forms.Label();
+            this.label20 = new System.Windows.Forms.Label();
             this.tabMain.SuspendLayout();
             this.tabChart.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.tagChart1)).BeginInit();
@@ -111,12 +117,18 @@
             this.tabMain.Location = new System.Drawing.Point(0, 28);
             this.tabMain.Name = "tabMain";
             this.tabMain.SelectedIndex = 0;
-            this.tabMain.Size = new System.Drawing.Size(1163, 561);
+            this.tabMain.Size = new System.Drawing.Size(1266, 561);
             this.tabMain.TabIndex = 0;
             // 
             // tabChart
             // 
             this.tabChart.BackColor = System.Drawing.SystemColors.Control;
+            this.tabChart.Controls.Add(this.label20);
+            this.tabChart.Controls.Add(this.label19);
+            this.tabChart.Controls.Add(this.label18);
+            this.tabChart.Controls.Add(this.tagText17);
+            this.tabChart.Controls.Add(this.tagText16);
+            this.tabChart.Controls.Add(this.tagText15);
             this.tabChart.Controls.Add(this.tagText14);
             this.tabChart.Controls.Add(this.tagText6);
             this.tabChart.Controls.Add(this.label16);
@@ -151,10 +163,11 @@
             this.tabChart.Location = new System.Drawing.Point(4, 22);
             this.tabChart.Name = "tabChart";
             this.tabChart.Padding = new System.Windows.Forms.Padding(3);
-            this.tabChart.Size = new System.Drawing.Size(1155, 535);
+            this.tabChart.Size = new System.Drawing.Size(1258, 535);
             this.tabChart.TabIndex = 1;
             this.tabChart.Tag = "Right";
             this.tabChart.Text = "Chart";
+            this.tabChart.Click += new System.EventHandler(this.tabChart_Click);
             // 
             // tagText14
             // 
@@ -643,52 +656,52 @@
             this.tagChart1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            chartArea1.AxisX.Maximum = 500D;
-            chartArea1.AxisX.Minimum = 0D;
-            chartArea1.AxisY.Interval = 10D;
-            chartArea1.AxisY.MajorGrid.Interval = 10D;
-            chartArea1.AxisY.MajorGrid.IntervalOffset = 0D;
-            chartArea1.AxisY.MajorTickMark.Enabled = false;
-            chartArea1.AxisY.Maximum = 50D;
-            chartArea1.AxisY.Minimum = -50D;
-            chartArea1.Name = "ChartArea1";
-            this.tagChart1.ChartAreas.Add(chartArea1);
-            legend1.Enabled = false;
-            legend1.Name = "Legend1";
-            this.tagChart1.Legends.Add(legend1);
+            chartArea2.AxisX.Maximum = 500D;
+            chartArea2.AxisX.Minimum = 0D;
+            chartArea2.AxisY.Interval = 10D;
+            chartArea2.AxisY.MajorGrid.Interval = 10D;
+            chartArea2.AxisY.MajorGrid.IntervalOffset = 0D;
+            chartArea2.AxisY.MajorTickMark.Enabled = false;
+            chartArea2.AxisY.Maximum = 50D;
+            chartArea2.AxisY.Minimum = -50D;
+            chartArea2.Name = "ChartArea1";
+            this.tagChart1.ChartAreas.Add(chartArea2);
+            legend2.Enabled = false;
+            legend2.Name = "Legend1";
+            this.tagChart1.Legends.Add(legend2);
             this.tagChart1.Location = new System.Drawing.Point(3, 372);
             this.tagChart1.Module = "Corner";
             this.tagChart1.Name = "tagChart1";
-            series1.ChartArea = "ChartArea1";
-            series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
-            series1.Color = System.Drawing.Color.Red;
-            series1.Legend = "Legend1";
-            series1.Name = "LError";
-            series2.ChartArea = "ChartArea1";
-            series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
-            series2.Color = System.Drawing.Color.Blue;
-            series2.Legend = "Legend1";
-            series2.Name = "RError";
-            series3.ChartArea = "ChartArea1";
-            series3.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
-            series3.Legend = "Legend1";
-            series3.Name = "ZAxis";
-            series4.ChartArea = "ChartArea1";
-            series4.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
-            series4.Color = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(0)))));
-            series4.Legend = "Legend1";
-            series4.Name = "LeftSlow";
-            series5.ChartArea = "ChartArea1";
-            series5.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
-            series5.Color = System.Drawing.Color.Green;
-            series5.Legend = "Legend1";
-            series5.Name = "RightSlow";
-            this.tagChart1.Series.Add(series1);
-            this.tagChart1.Series.Add(series2);
-            this.tagChart1.Series.Add(series3);
-            this.tagChart1.Series.Add(series4);
-            this.tagChart1.Series.Add(series5);
-            this.tagChart1.Size = new System.Drawing.Size(1152, 141);
+            series6.ChartArea = "ChartArea1";
+            series6.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
+            series6.Color = System.Drawing.Color.Red;
+            series6.Legend = "Legend1";
+            series6.Name = "LError";
+            series7.ChartArea = "ChartArea1";
+            series7.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
+            series7.Color = System.Drawing.Color.Blue;
+            series7.Legend = "Legend1";
+            series7.Name = "RError";
+            series8.ChartArea = "ChartArea1";
+            series8.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
+            series8.Legend = "Legend1";
+            series8.Name = "ZAxis";
+            series9.ChartArea = "ChartArea1";
+            series9.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
+            series9.Color = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(0)))));
+            series9.Legend = "Legend1";
+            series9.Name = "LeftSlow";
+            series10.ChartArea = "ChartArea1";
+            series10.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastLine;
+            series10.Color = System.Drawing.Color.Green;
+            series10.Legend = "Legend1";
+            series10.Name = "RightSlow";
+            this.tagChart1.Series.Add(series6);
+            this.tagChart1.Series.Add(series7);
+            this.tagChart1.Series.Add(series8);
+            this.tagChart1.Series.Add(series9);
+            this.tagChart1.Series.Add(series10);
+            this.tagChart1.Size = new System.Drawing.Size(1255, 141);
             this.tagChart1.TabIndex = 16;
             this.tagChart1.Text = "tagChart1";
             // 
@@ -1101,7 +1114,7 @@
             this.BtnReset});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(1163, 25);
+            this.toolStrip1.Size = new System.Drawing.Size(1257, 25);
             this.toolStrip1.TabIndex = 1;
             this.toolStrip1.Text = "toolStrip1";
             // 
@@ -1165,7 +1178,7 @@
             this.stripError});
             this.statusStrip1.Location = new System.Drawing.Point(0, 566);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(1163, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(1257, 22);
             this.statusStrip1.TabIndex = 2;
             this.statusStrip1.Text = "Status";
             // 
@@ -1188,11 +1201,77 @@
             this.stripError.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.stripError.ToolTipText = "Application errors";
             // 
+            // tagText15
+            // 
+            this.tagText15.AcceptsReturn = true;
+            this.tagText15.AcceptsTab = true;
+            this.tagText15.Location = new System.Drawing.Point(843, 229);
+            this.tagText15.Module = "AirRide";
+            this.tagText15.Multiline = true;
+            this.tagText15.Name = "tagText15";
+            this.tagText15.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.tagText15.Size = new System.Drawing.Size(97, 124);
+            this.tagText15.Sort = "XAxis";
+            this.tagText15.TabIndex = 90;
+            // 
+            // tagText16
+            // 
+            this.tagText16.AcceptsReturn = true;
+            this.tagText16.AcceptsTab = true;
+            this.tagText16.Location = new System.Drawing.Point(946, 229);
+            this.tagText16.Module = "AirRide";
+            this.tagText16.Multiline = true;
+            this.tagText16.Name = "tagText16";
+            this.tagText16.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.tagText16.Size = new System.Drawing.Size(98, 124);
+            this.tagText16.Sort = "YAxis";
+            this.tagText16.TabIndex = 91;
+            // 
+            // tagText17
+            // 
+            this.tagText17.AcceptsReturn = true;
+            this.tagText17.AcceptsTab = true;
+            this.tagText17.Location = new System.Drawing.Point(1050, 227);
+            this.tagText17.Module = "AirRide";
+            this.tagText17.Multiline = true;
+            this.tagText17.Name = "tagText17";
+            this.tagText17.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.tagText17.Size = new System.Drawing.Size(94, 124);
+            this.tagText17.Sort = "ZAxis";
+            this.tagText17.TabIndex = 91;
+            // 
+            // label18
+            // 
+            this.label18.AutoSize = true;
+            this.label18.Location = new System.Drawing.Point(840, 211);
+            this.label18.Name = "label18";
+            this.label18.Size = new System.Drawing.Size(36, 13);
+            this.label18.TabIndex = 92;
+            this.label18.Text = "X Axis";
+            // 
+            // label19
+            // 
+            this.label19.AutoSize = true;
+            this.label19.Location = new System.Drawing.Point(943, 213);
+            this.label19.Name = "label19";
+            this.label19.Size = new System.Drawing.Size(36, 13);
+            this.label19.TabIndex = 93;
+            this.label19.Text = "Y Axis";
+            // 
+            // label20
+            // 
+            this.label20.AutoSize = true;
+            this.label20.Location = new System.Drawing.Point(1047, 211);
+            this.label20.Name = "label20";
+            this.label20.Size = new System.Drawing.Size(35, 13);
+            this.label20.TabIndex = 94;
+            this.label20.Text = "Z axis";
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1163, 588);
+            this.ClientSize = new System.Drawing.Size(1257, 588);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.tabMain);
@@ -1276,6 +1355,12 @@
         private System.Windows.Forms.Label label15;
         private System.Windows.Forms.TextBox txtErrors;
         private System.Windows.Forms.Label label17;
+        private MettleLib.TagText tagText17;
+        private MettleLib.TagText tagText16;
+        private MettleLib.TagText tagText15;
+        private System.Windows.Forms.Label label20;
+        private System.Windows.Forms.Label label19;
+        private System.Windows.Forms.Label label18;
     }
 }
 

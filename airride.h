@@ -48,6 +48,8 @@ class CAirRide
     void LISGetID();
     void LISGetXYZ();
     
+    int32_t GetHeight(Position corner);
+    
     CCorner CornerL;
     CCorner CornerR;
     CEEprom EEProm;

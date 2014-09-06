@@ -40,7 +40,7 @@ CCorner::CCorner()://Position p):
 {
 
 	LastTime 		= millis();
-	filter_reg 		= GetHeight() << FILTER_SHIFT;
+	//filter_reg 		= GetHeight() << FILTER_SHIFT;
 
     pinMode(PINDUMP_RIGHTREAR, OUTPUT);
     digitalWrite(PINDUMP_RIGHTREAR, LOW);
@@ -59,10 +59,10 @@ CCorner::CCorner()://Position p):
     //analog in pins need no setup
 }
 
-void CCorner::Init(Position p)
+void CCorner::Init(Position p, int32_t height)
 {
     int i;
-    int32_t height = GetHeight();
+    //int32_t height = GetHeight();
     
     //initalize filters
     for(i=0; i<10; i++)
@@ -92,39 +92,6 @@ void CCorner::Limits(int16_t Low, int16_t high)
     LimitHigh = high -2;
 }
 
-//Get the height of this corner
-int32_t CCorner::GetHeight()
-{
-    int32_t height=0;
-    
-    switch(corner)
-   {
-        case LeftRear:
-            height = (int32_t)analogRead(PINLRHEIGHT); 
-            break;
-        case RightRear:
-            height = (int32_t)analogRead(PINRRHEIGHT);
-            break;
-   }   
-   
-   //calculate speed, counts/second
-   if(IsTimedOut(1000, SpeedTime))
-   {
-        if(height > OldHeight)
-        {
-            HeightSpeed = height - OldHeight;
-        }
-        else
-        {
-            HeightSpeed = OldHeight - height;
-        }
-        
-        OldHeight = height;
-        SpeedTime = millis();
-   }
-   
-   return height;
-}
 
 //open or close the fill solenoid for this corner
 void CCorner::Fill(Solenoid state)
@@ -362,10 +329,26 @@ void CCorner::DoHeight(int32_t height, int32_t setpoint)
 
 
 
-void CCorner::Run(int32_t setpoint)
+void CCorner::Run(int32_t setpoint, int32_t height)
 {		
     int i;
-    int32_t height 			= GetHeight();
+    //int32_t height 			= GetHeight();
+    
+    //calculate speed, counts/second
+   if(IsTimedOut(1000, SpeedTime))
+   {
+        if(height > OldHeight)
+        {
+            HeightSpeed = height - OldHeight;
+        }
+        else
+        {
+            HeightSpeed = OldHeight - height;
+        }
+        
+        OldHeight = height;
+        SpeedTime = millis();
+   }
     
     //prevent setpoint from exceeding cal limits
     if(setpoint > LimitHigh)
@@ -521,7 +504,4 @@ bool CCorner::IsMoving()
     }
     return ret;
 }
-
-
-
 

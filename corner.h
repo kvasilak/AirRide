@@ -65,31 +65,31 @@ enum ValveOp
 
 class CCorner 
 {
-	public:
-	CCorner();//Position c);
-	void Run(int32_t setpoint);
+  public:
+    CCorner();//Position c);
+    void Run(int32_t setpoint, int32_t height);
     void Fill(Solenoid state);
     void Dump(Solenoid state);
     void FillExit();
     void DumpExit();
     void PrintCorner();
-    void Init(Position p);
+    void Init(Position p, int32_t height);
     void Limits(int16_t Low, int16_t high);
     void SetLongFilter(bool slow);
     void AtHeight(bool at);
     bool AtHeight();
-    int32_t GetHeight();
+    //int32_t GetHeight();
     void DoHeight(int32_t height, int32_t setpoint);
     bool IsMoving();
   
-	private:
-	int16_t DeadBand;			//how far the corner has to move before we try to adjust the position
-	int16_t HoldDeadBand; 	    //deadband + hysterysis
-	Position corner;
-	uint32_t CycleTime;		    //The minimum time between valve state changes. Prevents valve chatter
-	ValveOp State;
-	uint32_t LastTime;		    //the last time valve changed state
-	int32_t filter_reg; 
+  private:
+    int16_t DeadBand;			//how far the corner has to move before we try to adjust the position
+    int16_t HoldDeadBand; 	    //deadband + hysterysis
+    Position corner;
+    uint32_t CycleTime;		    //The minimum time between valve state changes. Prevents valve chatter
+    ValveOp State;
+    uint32_t LastTime;		    //the last time valve changed state
+    int32_t filter_reg; 
     uint32_t HoldOffTime;       //Min time between state changes
     uint32_t PulseStart;
     uint32_t UpdateTime;

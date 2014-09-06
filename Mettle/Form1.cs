@@ -271,6 +271,11 @@ namespace Mettle
             txtErrors.Clear();
         }
 
+        private void tabChart_Click(object sender, EventArgs e)
+        {
+
+        }
+
 
     }
 }

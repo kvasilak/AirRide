@@ -242,7 +242,7 @@ void CAirRide::GetMode()
         char buffer[15];
         strcpy_P(buffer, (char*)pgm_read_word(&(modestrs[m]))); // copy strings out of program space
         
-        Serial.print(F(">AirRide, Mode,"));
+          Serial.print(F(">AirRide, Mode,"));
         Serial.print(buffer);
         //Serial.print(m);
         Serial.println(F("<"));
@@ -395,7 +395,11 @@ void CAirRide::Run()
   
     SetPoint = analogRead(PINSETPOINT);
     Tilt = analogRead(PINTILT)-512;
-        
+    
+    int16_t x_axis = analogRead(XAXIS);
+    int16_t y_axis = analogRead(YAXIS);
+    int16_t z_axis = analogRead(ZAXIS);
+    
     //read the tilt setpoint and adjust heights as needed
     //center of pot means no tilt
     //increasing value (>512) means raise right side, lower left side
@@ -410,6 +414,18 @@ void CAirRide::Run()
         
         Serial.print(F(">AirRide,Tilt,"));
         Serial.print(Tilt);
+        Serial.println(F("<"));
+        
+        Serial.print(F(">AirRide,XAxis,"));
+        Serial.print(x_axis);
+        Serial.println(F("<"));
+        
+        Serial.print(F(">AirRide,YAxis,"));
+        Serial.print(y_axis);
+        Serial.println(F("<"));
+        
+        Serial.print(F(">AirRide,ZAxis,"));
+        Serial.print(z_axis);
         Serial.println(F("<"));
                
         SampleTime = millis();
@@ -428,8 +444,8 @@ void CAirRide::Run()
             SetState(RUNMANUAL);
             break;
         case RUNMANUAL: 
-            CornerL.Run(SetPoint - Tilt);  
-            CornerR.Run(SetPoint + Tilt);
+            CornerL.Run(SetPoint - Tilt, GetHeight(LeftRear));  
+            CornerR.Run(SetPoint + Tilt, GetHeight(RightRear));
             break;
             
         //Run at the calibrated travel height
@@ -457,28 +473,28 @@ void CAirRide::Run()
             }
             else
             {
-                CornerL.Run(LTravelHeight);  
-                CornerR.Run(RTravelHeight);
+                CornerL.Run(LTravelHeight, GetHeight(LeftRear));  
+                CornerR.Run(RTravelHeight, GetHeight(RightRear));
             }
         case RUNTRAVEL:
-            CornerL.Run(LTravelHeight);  
-            CornerR.Run(RTravelHeight);  
+            CornerL.Run(LTravelHeight, GetHeight(LeftRear));  
+            CornerR.Run(RTravelHeight, GetHeight(RightRear));  
             break;
             
         //Auto level to the  for camping
         case RUNCAMP:
             //read accel
             CaclulateLevel();
-            CornerL.Run(512);  
-            CornerR.Run(512);
+            CornerL.Run(512, GetHeight(LeftRear));  
+            CornerR.Run(512, GetHeight(RightRear));
             break;
             
         //manually level the coach to the horizon
         //then press caibrate to save the acellerometer values
         //to use for autoleveling
         case RUNAUTOCAL:
-            CornerL.Run(0);  
-            CornerR.Run(0);
+            CornerL.Run(0, GetHeight(LeftRear));  
+            CornerR.Run(0, GetHeight(RightRear));
             break;
         //raise and lower the coach to find the upper and lower limits of travel 
         //must be in travelmode before pressing cal button
@@ -488,8 +504,8 @@ void CAirRide::Run()
           SetState(CALLIMITSRUN);
           break;
         case CALLIMITSRUN:
-            CornerL.Run(0);  
-            CornerR.Run(0);
+            CornerL.Run(0, GetHeight(LeftRear));  
+            CornerR.Run(0, GetHeight(RightRear));
           
             //Blink Cal LED fast
             if(IsTimedOut(25, blinktime))
@@ -499,7 +515,7 @@ void CAirRide::Run()
               blinktime = millis();
             }
             
-            if(CornerL.GetHeight() > 200)
+            if(GetHeight(LeftRear) > 200)
             {
                 if(CornerL.IsMoving() || CornerR.IsMoving() )
                 {
@@ -527,11 +543,11 @@ void CAirRide::Run()
             }
             break;
         case CALLOW:
-            CornerL.Run(0);  
-            CornerR.Run(0);
+            CornerL.Run(0, GetHeight(LeftRear));  
+            CornerR.Run(0, GetHeight(RightRear));
             
             //blink Cal LEd kinda fast
-            if(IsTimedOut(500, blinktime))
+            if(IsTimedOut(100, blinktime))
             {
               CalLED(bBlink);
               bBlink != bBlink;
@@ -553,8 +569,8 @@ void CAirRide::Run()
                     
                     MoveTimeOut = millis();
                     
-                    LeftLowLimit = CornerL.GetHeight();
-                    RightLowLimit = CornerR.GetHeight();
+                    LeftLowLimit = GetHeight(LeftRear);
+                    RightLowLimit = GetHeight(RightRear);
                     
                     Serial.print(F("AirRide,msg,Left low cal; "));
                     Serial.print(LeftLowLimit);
@@ -570,11 +586,11 @@ void CAirRide::Run()
             }
             break;
         case CALWAITHIGH:
-            CornerL.Run(1024);  
-            CornerR.Run(1024);
+            CornerL.Run(1024, GetHeight(LeftRear));  
+            CornerR.Run(1024, GetHeight(RightRear));
             
             //blink cal led slow
-            if(IsTimedOut(1000, blinktime))
+            if(IsTimedOut(200, blinktime))
             {
               CalLED(bBlink);
               bBlink != bBlink;
@@ -601,10 +617,16 @@ void CAirRide::Run()
             }
             break;
         case CALHIGH:
-            CornerL.Run(1024);  
-            CornerR.Run(1024);
+            CornerL.Run(1024, GetHeight(LeftRear));  
+            CornerR.Run(1024, GetHeight(RightRear));
             
-            //Cal LED on
+            //Cal LED
+            if(IsTimedOut(400, blinktime))
+            {
+              CalLED(bBlink);
+              bBlink != bBlink;
+              blinktime = millis();
+            }
             
             if(CornerL.IsMoving() || CornerR.IsMoving() )
             {
@@ -619,8 +641,8 @@ void CAirRide::Run()
      
                     MoveTimeOut = millis();
                     
-                    LeftHighLimit = CornerL.GetHeight();
-                    RightHighLimit = CornerR.GetHeight();
+                    LeftHighLimit = GetHeight(LeftRear);
+                    RightHighLimit = GetHeight(RightRear);
                     
                     Serial.print(F("AirRide,msg,Left hi cal; "));
                     Serial.print(RightHighLimit);
@@ -668,14 +690,14 @@ void CAirRide::Run()
             
         case CALTRAVEL:
             //dont adjust height, let the user adjust the height with the remote
-            CornerL.DoHeight(CornerL.GetHeight(), 512);
-            CornerR.DoHeight(CornerR.GetHeight(), 512);
+            CornerL.DoHeight(GetHeight(LeftRear), 512);
+            CornerR.DoHeight(GetHeight(RightRear), 512);
             break;
         case CALTRAVELDONE:
             //save heights
             //return to where we were
-            LTravelHeight = CornerL.GetHeight(); 
-            RTravelHeight = CornerR.GetHeight(); 
+            LTravelHeight = GetHeight(LeftRear); 
+            RTravelHeight = GetHeight(RightRear); 
     
             EEProm.SaveLeftTravel(LTravelHeight); 
             EEProm.SaveRightTravel(RTravelHeight);
@@ -694,3 +716,23 @@ void CAirRide::Run()
     }
   
 }
+
+//Get the height of this corner
+int32_t CAirRide::GetHeight(Position corner)
+{
+    int32_t height=0;
+    
+    switch(corner)
+   {
+        case LeftRear:
+            height = (int32_t)analogRead(PINLRHEIGHT); 
+            break;
+        case RightRear:
+            height = (int32_t)analogRead(PINRRHEIGHT);
+            break;
+   }   
+   
+   return height;
+}
+
+
